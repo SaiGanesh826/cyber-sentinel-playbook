@@ -47,7 +47,7 @@ function MissionBriefing() {
               You are working as an employee in the organization.
             </p>
             <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
-              <li>Review your inbox carefully — 10 emails are waiting.</li>
+              <li>Review your inbox carefully — your inbox is waiting.</li>
               <li>Investigate emails exactly as you would during your daily work.</li>
               <li>
                 If you believe an email is suspicious or phishing, click{" "}
@@ -73,7 +73,7 @@ function MissionBriefing() {
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Stat icon={Inbox} title="10 emails" body="Mix of legitimate, suspicious, and phishing." />
+        <Stat icon={Inbox} title="Inbox tasks" body="Mix of legitimate, suspicious, and phishing." />
         <Stat icon={FileSearch} title="Free-form" body="Open any email in any order, as many times as you need." />
         <Stat icon={Flag} title="Report only what's bad" body="Don't report safe emails — that's a false alarm." />
       </div>
