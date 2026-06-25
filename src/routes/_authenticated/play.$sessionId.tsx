@@ -478,6 +478,7 @@ function ReadingPane({
   status,
   onRecord,
   onClickLink,
+  onHoverLink,
   onOpenAttachment,
   onReport,
 }: {
@@ -485,9 +486,14 @@ function ReadingPane({
   status: EmailStatus;
   onRecord: (action: string, target?: string) => void;
   onClickLink: (href: string) => void;
+  onHoverLink: (href: string | null) => void;
   onOpenAttachment: (name: string) => void;
   onReport: () => void;
 }) {
+  function closestAnchor(el: HTMLElement | null): HTMLAnchorElement | null {
+    while (el && el.tagName !== "A") el = el.parentElement;
+    return el as HTMLAnchorElement | null;
+  }
   return (
     <>
       <header className="border-b border-border p-5">
@@ -507,14 +513,24 @@ function ReadingPane({
       <div
         className="prose prose-sm max-w-none flex-1 overflow-y-auto p-6 text-sm leading-relaxed"
         onClickCapture={(ev) => {
-          const t = ev.target as HTMLElement;
-          if (t.tagName === "A") {
+          const a = closestAnchor(ev.target as HTMLElement);
+          if (a) {
             ev.preventDefault();
-            onClickLink((t as HTMLAnchorElement).href);
+            onClickLink(a.getAttribute("href") || a.href);
           }
+        }}
+        onMouseOver={(ev) => {
+          const a = closestAnchor(ev.target as HTMLElement);
+          if (a) onHoverLink(a.getAttribute("href") || a.href);
+        }}
+        onMouseOut={(ev) => {
+          const a = closestAnchor(ev.target as HTMLElement);
+          if (a) onHoverLink(null);
         }}
         dangerouslySetInnerHTML={{ __html: email.body_html }}
       />
+      {/* eslint-disable-next-line @typescript-eslint/no-unused-expressions */}
+      {void status}
       {email.attachments.length > 0 && (
         <div className="border-t border-border p-4">
           <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
