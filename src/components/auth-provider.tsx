@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    router.navigate({ to: "/auth", replace: true });
+    router.navigate({ to: "/", replace: true });
   }, [queryClient, router]);
 
   return (
