@@ -35,7 +35,7 @@ function Dashboard() {
             Welcome back, {profile?.full_name?.split(" ")[0] || "Employee"}.
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Launch a phishing awareness session whenever you're ready.
+            Launch a cybersecurity training session whenever you're ready.
           </p>
         </div>
         {isStaff && (
