@@ -1,8 +1,17 @@
-// Hardcoded inbox of 10 workplace emails for the phishing-awareness training.
-// Shared between client (renders the inbox) and server (scores submissions).
+// Hardcoded inbox of 10 workplace emails for the Training module
+// (inbox-investigation scenario). Shared between client and server.
 //
 // `verdict` is the ground truth and is NEVER sent to the client raw — the
 // client imports only the redacted shape via `getInboxClient()`.
+//
+// Design goals:
+//  - Emails LOOK like real Outlook/Gmail messages: professional formatting,
+//    signatures, logos, action buttons, attachments.
+//  - Hyperlinks are HIDDEN: the visible text is friendly ("View Document",
+//    "Reset Password"), while the real `href` may point to a look-alike
+//    domain. The employee must hover/inspect to discover the truth.
+//  - Some phishing emails look highly convincing; some legitimate emails
+//    look slightly suspicious. The goal is investigation, not pattern-matching.
 
 export type EmailVerdict = "legitimate" | "suspicious" | "phishing";
 
@@ -12,178 +21,449 @@ export interface InboxEmail {
   sender_email: string;
   to: string;
   subject: string;
-  received_at: string; // e.g. "Today, 10:14 AM"
+  received_at: string;
   body_html: string;
   attachments: { name: string; size: string; suspicious?: boolean }[];
   links: { text: string; href: string; suspicious?: boolean }[];
   // server-only:
   verdict: EmailVerdict;
-  // when reported, these are the indicators the SOC team expects to see flagged
   expected_red_flags?: { id: string; label: string; explanation: string }[];
-  // explanation for the learning report
   rationale: string;
 }
 
+// ---------- shared HTML helpers (inline styles so emails look like real mail) ----------
+
+const FONT = `font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:#202124; font-size:14px; line-height:1.55;`;
+
+function btn(text: string, href: string, color = "#0067b8") {
+  return `<a href="${href}" style="display:inline-block;background:${color};color:#ffffff !important;text-decoration:none;padding:10px 22px;border-radius:4px;font-weight:600;font-size:13px;letter-spacing:.2px;">${text}</a>`;
+}
+
+function signature(opts: {
+  name: string;
+  title: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  websiteHref?: string;
+  logoUrl?: string;
+}) {
+  const {
+    name,
+    title,
+    company = "Nipun Technologies Pvt. Ltd.",
+    email,
+    phone,
+    website = "www.nipun.com",
+    websiteHref = "https://www.nipun.com",
+    logoUrl,
+  } = opts;
+  return `
+    <table cellpadding="0" cellspacing="0" style="border-top:1px solid #e0e0e0; margin-top:18px; padding-top:12px; font-size:12px; color:#5f6368; ${FONT}">
+      <tr>
+        ${
+          logoUrl
+            ? `<td style="padding-right:14px; vertical-align:top;"><img src="${logoUrl}" alt="${company}" width="56" style="display:block;border-radius:6px;"/></td>`
+            : ""
+        }
+        <td style="vertical-align:top;">
+          <div style="font-weight:600; color:#202124; font-size:13px;">${name}</div>
+          <div style="color:#5f6368;">${title} · ${company}</div>
+          ${email ? `<div style="margin-top:4px;">✉ <a href="mailto:${email}" style="color:#5f6368; text-decoration:none;">${email}</a></div>` : ""}
+          ${phone ? `<div>☎ ${phone}</div>` : ""}
+          <div>🌐 <a href="${websiteHref}" style="color:#1a73e8; text-decoration:none;">${website}</a></div>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function confidentiality() {
+  return `<p style="margin-top:14px;font-size:10.5px;color:#9aa0a6;line-height:1.4;">This email and any attachments are confidential and intended solely for the addressee. If you have received this message in error, please notify the sender and delete it from your system.</p>`;
+}
+
+// ---------- the 10 emails ----------
+
 export const INBOX_EMAILS: InboxEmail[] = [
+  // 1. LEGITIMATE — HR timesheet reminder (looks normal)
   {
     id: "e1",
-    sender_name: "Priya Menon — HR",
+    sender_name: "Priya Menon",
     sender_email: "priya.menon@nipun.com",
     to: "you@nipun.com",
-    subject: "Reminder: Submit your timesheet by Friday",
+    subject: "Reminder: Submit your timesheet by Friday 6:00 PM",
     received_at: "Today, 9:02 AM",
-    body_html: `<p>Hi team,</p><p>This is a friendly reminder to submit your timesheet for this week by Friday EOD in the HR portal. Reach out if you need any help.</p><p>Thanks,<br/>Priya</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <p>Hi team,</p>
+        <p>This is your weekly reminder to submit your timesheet in Workday by <b>Friday, 6:00 PM IST</b>. Late submissions delay payroll for the entire department, so please don't miss the deadline.</p>
+        <p>You can find a short how-to guide in the HR knowledge base if you're new to the process.</p>
+        <p style="margin:22px 0;">
+          ${btn("Open Workday Timesheet", "https://workday.nipun.com/timesheets")}
+        </p>
+        <p>Reach out if you need any help.</p>
+        <p>Best regards,<br/>Priya</p>
+        ${signature({
+          name: "Priya Menon",
+          title: "People Operations Lead",
+          email: "priya.menon@nipun.com",
+          phone: "+91 80 4000 1200",
+        })}
+        ${confidentiality()}
+      </div>`,
     attachments: [],
-    links: [{ text: "HR portal", href: "https://portal.nipun.com/timesheets" }],
+    links: [
+      { text: "Open Workday Timesheet", href: "https://workday.nipun.com/timesheets" },
+    ],
     verdict: "legitimate",
-    rationale: "Internal HR communication from the real domain, no urgency, no malicious link, no suspicious request.",
+    rationale:
+      "Internal HR communication from the real corporate domain (nipun.com). Link text and destination domain match. No credential request, no unusual urgency.",
   },
+
+  // 2. PHISHING — Mailbox quota with hidden link to look-alike domain
   {
     id: "e2",
-    sender_name: "IT Helpdesk",
-    sender_email: "it-support@nipun-secure.net",
+    sender_name: "Microsoft 365 Support",
+    sender_email: "no-reply@microsoft-365-alerts.com",
     to: "you@nipun.com",
-    subject: "URGENT: Your mailbox quota is full — verify now",
+    subject: "Action required: Your mailbox storage is 98% full",
     received_at: "Today, 9:18 AM",
-    body_html: `<p>Dear User,</p><p>Your mailbox has exceeded 95% capacity. To avoid losing emails, <a href="https://nipun-secure.net/verify?u=you">click here to verify your credentials</a> within 24 hours.</p><p>IT Support</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <table cellpadding="0" cellspacing="0" style="width:100%; background:#f3f3f3; padding:14px 0; border-bottom:3px solid #0067b8;">
+          <tr><td style="padding:0 22px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" width="120" alt="Microsoft" style="display:block;"/>
+          </td></tr>
+        </table>
+        <div style="padding:24px;">
+          <h2 style="margin:0 0 14px 0; font-weight:600; color:#201f1e;">Your mailbox is almost full</h2>
+          <p>Dear user,</p>
+          <p>Our records show that your mailbox <b>you@nipun.com</b> has reached <b>98% of its storage limit</b>. To continue sending and receiving messages without interruption, please verify your account to receive an additional <b>5&nbsp;GB</b> of storage at no cost.</p>
+          <p>This verification request will <b>expire in 24 hours</b>.</p>
+          <p style="margin:26px 0;">
+            ${btn("Verify Account &amp; Add Storage", "https://login-microsoftonline.secure-verify365.com/auth")}
+          </p>
+          <p>If you do not complete verification, your account may be temporarily suspended.</p>
+          <p style="margin-top:22px;">Thank you,<br/>The Microsoft 365 Team</p>
+          <p style="margin-top:22px; font-size:11px; color:#605e5c;">© 2026 Microsoft Corporation. One Microsoft Way, Redmond, WA 98052.</p>
+        </div>
+      </div>`,
     attachments: [],
-    links: [{ text: "click here to verify your credentials", href: "https://nipun-secure.net/verify?u=you", suspicious: true }],
+    links: [
+      {
+        text: "Verify Account & Add Storage",
+        href: "https://login-microsoftonline.secure-verify365.com/auth",
+        suspicious: true,
+      },
+    ],
     verdict: "phishing",
     expected_red_flags: [
-      { id: "lookalike_domain", label: "Look-alike sender domain (nipun-secure.net is not nipun.com)", explanation: "Attackers register domains that resemble your company's real one." },
-      { id: "urgency", label: "Creates urgency / threatens loss of access", explanation: "Pressure is a classic social-engineering tactic." },
-      { id: "credential_request", label: "Asks you to verify or re-enter credentials via a link", explanation: "Legitimate IT never asks for passwords by email." },
+      { id: "lookalike_domain", label: "Sender domain is microsoft-365-alerts.com, not microsoft.com", explanation: "Microsoft never sends real account notifications from third-party look-alike domains." },
+      { id: "urgency", label: "Artificial 24-hour deadline / threat of suspension", explanation: "Pressure tactics are a classic social-engineering signal." },
+      { id: "credential_request", label: "Button links to a fake login page", explanation: "Hovering reveals secure-verify365.com — not a Microsoft domain. Real Microsoft links go to *.microsoft.com or *.live.com." },
+      { id: "generic_greeting", label: "Generic greeting (\"Dear user\")", explanation: "Legitimate provider mail addresses you by name." },
     ],
-    rationale: "Credential-phishing: look-alike domain, urgency, link leading to a fake login.",
+    rationale:
+      "Credential-harvesting phishing dressed up as Microsoft 365. Branding looks legitimate but the sender domain and the link destination both reveal the attack.",
   },
+
+  // 3. LEGITIMATE — Amazon shipment (a bit terse, but real)
   {
     id: "e3",
-    sender_name: "Amazon",
-    sender_email: "shipment-tracking@amazon.com",
+    sender_name: "Amazon.in",
+    sender_email: "shipment-tracking@amazon.in",
     to: "you@nipun.com",
-    subject: "Your order #112-9908-447 has shipped",
+    subject: "Your Amazon.in order has shipped (#403-2918-1140)",
     received_at: "Yesterday, 6:41 PM",
-    body_html: `<p>Hello,</p><p>Good news — your order has shipped and will arrive on Thursday. You can track it in your Amazon account.</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#232f3e; padding:14px 20px;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" width="100" alt="Amazon" style="display:block;"/>
+        </div>
+        <div style="padding:22px;">
+          <h3 style="margin:0 0 10px 0;">Your package is on the way</h3>
+          <p>Hello, your order <b>#403-2918-1140</b> has shipped and is expected to arrive on <b>Thursday, 27 Jun</b>.</p>
+          <table cellpadding="0" cellspacing="0" style="margin:14px 0; border:1px solid #eee; padding:12px; width:100%;">
+            <tr>
+              <td style="padding:8px; width:80px;"><div style="width:64px;height:64px;background:#f2f2f2;border-radius:6px;display:inline-block;"></div></td>
+              <td style="padding:8px; vertical-align:top;">
+                <div style="font-weight:600;">Logitech MX Master 3S</div>
+                <div style="color:#565959; font-size:12px;">Qty: 1 · Sold by Cloudtail India</div>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:22px 0;">${btn("Track Package", "https://www.amazon.in/gp/your-account/order-details?orderID=403-2918-1140", "#febd69")}</p>
+          <p style="font-size:12px; color:#565959;">We hope to see you again soon.<br/>Amazon.in</p>
+        </div>
+      </div>`,
     attachments: [],
-    links: [{ text: "Track in Amazon account", href: "https://www.amazon.com/orders" }],
+    links: [
+      {
+        text: "Track Package",
+        href: "https://www.amazon.in/gp/your-account/order-details?orderID=403-2918-1140",
+      },
+    ],
     verdict: "legitimate",
-    rationale: "Real consumer notification, sender domain matches, no credential request, no attachment.",
+    rationale:
+      "Genuine shipment notification — sender domain matches Amazon and the tracking link points to amazon.in. No credentials requested.",
   },
+
+  // 4. PHISHING — BEC / CEO impersonation (very convincing)
   {
     id: "e4",
-    sender_name: "Rajesh Kumar — CEO",
+    sender_name: "Rajesh Kumar",
     sender_email: "rajesh.kumar@nipun-corp.co",
     to: "you@nipun.com",
-    subject: "Quick task — are you available?",
+    subject: "Quick favour — are you at your desk?",
     received_at: "Today, 10:03 AM",
-    body_html: `<p>Hi,</p><p>Are you at your desk? I need you to quickly process a wire transfer for a confidential acquisition. Don't loop in finance yet — reply only to me.</p><p>Sent from my iPhone</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <p>Hi,</p>
+        <p>Are you free for the next 15 minutes? I'm in back-to-back meetings and need someone to help me close a confidential acquisition payment today.</p>
+        <p>Please reply only to this email — don't loop in finance yet, the deal hasn't been announced. I'll send the vendor's bank details and the amount once you confirm.</p>
+        <p>Thanks,<br/>Rajesh</p>
+        <p style="margin-top:20px; color:#5f6368; font-size:12px;">
+          Sent from my iPhone
+        </p>
+      </div>`,
     attachments: [],
     links: [],
     verdict: "phishing",
     expected_red_flags: [
-      { id: "ceo_impersonation", label: "CEO impersonation (Business Email Compromise)", explanation: "Attackers impersonate executives to bypass financial controls." },
+      { id: "ceo_impersonation", label: "Executive impersonation (Business Email Compromise)", explanation: "Attackers spoof the CEO to bypass financial controls." },
       { id: "lookalike_domain", label: "Domain is nipun-corp.co, not nipun.com", explanation: "Tiny domain differences are the giveaway." },
-      { id: "secrecy_request", label: "Demands secrecy and bypassing finance team", explanation: "Real executives don't ask you to bypass company policy." },
-      { id: "urgency", label: "Creates urgency around a financial action", explanation: "Time pressure prevents you from verifying out-of-band." },
+      { id: "secrecy_request", label: "Demands secrecy / asks you to bypass finance", explanation: "Real executives don't ask you to skip controls." },
+      { id: "urgency", label: "Time-pressure around a financial action", explanation: "Urgency prevents out-of-band verification." },
     ],
-    rationale: "Classic BEC / CEO-fraud: spoofed executive, look-alike domain, secrecy, financial action.",
+    rationale:
+      "Classic BEC / CEO-fraud. No link, no attachment — pure social engineering. The look-alike sender domain and request for secrecy are the only tells.",
   },
+
+  // 5. LEGITIMATE — Office 365 calendar (slightly bland, looks like spam at a glance)
   {
     id: "e5",
-    sender_name: "Office 365 Calendar",
-    sender_email: "noreply@nipun.com",
+    sender_name: "Microsoft Outlook",
+    sender_email: "calendar-noreply@nipun.com",
     to: "you@nipun.com",
-    subject: "Reminder: All-hands meeting at 4:00 PM",
+    subject: "Reminder: Quarterly All-Hands — Today at 4:00 PM",
     received_at: "Today, 8:45 AM",
-    body_html: `<p>This is your reminder for the all-hands meeting today at 4:00 PM in the main conference room. Agenda attached in the calendar invite.</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <div style="border-left:4px solid #0067b8; background:#f3f9ff; padding:14px 18px;">
+          <div style="font-weight:600; color:#0067b8;">Quarterly All-Hands</div>
+          <div style="color:#5f6368; font-size:12px; margin-top:2px;">Today · 4:00 PM – 5:00 PM IST · Main Conference Room / Teams</div>
+        </div>
+        <p style="margin-top:18px;">Hello,</p>
+        <p>This is a reminder that the <b>Q2 All-Hands</b> begins in your calendar today at 4:00 PM. The agenda and supporting decks are attached to the meeting invite in Outlook.</p>
+        <p>If you cannot attend, please RSVP from the original invite — do not reply to this automated reminder.</p>
+        <p style="margin-top:18px; font-size:12px; color:#5f6368;">— Microsoft Outlook on behalf of Nipun Internal Communications</p>
+      </div>`,
     attachments: [],
     links: [],
     verdict: "legitimate",
-    rationale: "Internal calendar reminder, real domain, no action requested.",
+    rationale:
+      "Internal calendar reminder from the real corporate domain. No action, no link, no attachment. Slightly bland but legitimate.",
   },
+
+  // 6. PHISHING — DocuSign salary letter with malicious attachment + hidden link
   {
     id: "e6",
-    sender_name: "DocuSign",
-    sender_email: "dse@nlpun.com",
+    sender_name: "DocuSign Electronic Signature Service",
+    sender_email: "dse_NA1@docusign.net.sign-portal.com",
     to: "you@nipun.com",
-    subject: "You have a document to sign: Salary_Revision_2026.htm",
+    subject: "Completed: \"Salary Revision — FY 2026.pdf\" is ready for your signature",
     received_at: "Yesterday, 4:12 PM",
-    body_html: `<p>You have received a document to review and sign.</p><p>Please open the attachment to view and sign your salary revision letter.</p>`,
-    attachments: [{ name: "Salary_Revision_2026.htm", size: "48 KB", suspicious: true }],
-    links: [{ text: "Open document", href: "http://dse-nlpun.com/doc?id=99421", suspicious: true }],
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#ffffff; border-top:6px solid #f7b500; padding:24px;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/DocuSign_logo.png" width="120" alt="DocuSign" style="display:block; margin-bottom:18px;"/>
+          <h3 style="margin:0 0 8px 0;">Priya Menon sent you a document to review and sign</h3>
+          <table cellpadding="0" cellspacing="0" style="margin:14px 0; padding:12px; background:#fafafa; border:1px solid #eee;">
+            <tr>
+              <td style="padding-right:14px;"><div style="width:40px;height:48px;background:#e8b923;border-radius:2px;display:inline-block;text-align:center;color:white;font-weight:700;line-height:48px;">PDF</div></td>
+              <td>
+                <div style="font-weight:600;">Salary Revision — FY 2026.pdf</div>
+                <div style="font-size:12px;color:#5f6368;">1 document · 1 page</div>
+              </td>
+            </tr>
+          </table>
+          <p>Please review and sign at your earliest convenience.</p>
+          <p style="margin:24px 0;">${btn("REVIEW DOCUMENT", "http://docusign-sign.nlpun-corp.com/d/?id=99421", "#f7b500")}</p>
+          <p style="font-size:12px; color:#5f6368;">If you have trouble signing, hover over the button above or contact your sender.</p>
+          <p style="font-size:11px; color:#9aa0a6; margin-top:20px;">Do Not Share This Email — This email contains a secure link to DocuSign. Please do not share this email, link, or access code with others.</p>
+        </div>
+      </div>`,
+    attachments: [
+      { name: "Salary_Revision_FY2026.htm", size: "48 KB", suspicious: true },
+    ],
+    links: [
+      {
+        text: "REVIEW DOCUMENT",
+        href: "http://docusign-sign.nlpun-corp.com/d/?id=99421",
+        suspicious: true,
+      },
+    ],
     verdict: "phishing",
     expected_red_flags: [
-      { id: "lookalike_domain", label: "Sender uses nlpun.com (lowercase L), not nipun.com", explanation: "Homoglyph attack." },
-      { id: "html_attachment", label: "HTML attachment masquerading as a document", explanation: ".htm/.html attachments are a common phishing payload." },
-      { id: "salary_bait", label: "Salary-related lure to encourage clicking", explanation: "Money-related subjects exploit curiosity." },
+      { id: "lookalike_domain", label: "Sender uses sign-portal.com, link points to nlpun-corp.com (homoglyph)", explanation: "Real DocuSign messages come from docusign.net only." },
+      { id: "html_attachment", label: ".htm attachment masquerading as a PDF", explanation: "HTML attachments are a common credential-harvester payload." },
+      { id: "salary_bait", label: "Money/salary lure to encourage clicking", explanation: "Salary-related subjects exploit curiosity and emotion." },
+      { id: "http_link", label: "Link uses http:// instead of https://", explanation: "DocuSign never sends unencrypted links." },
     ],
-    rationale: "Phishing via HTML attachment from a look-alike domain — likely credential harvester.",
+    rationale:
+      "Highly convincing DocuSign clone. Branding is correct, but the sender domain, the attachment extension, and the link destination all give it away.",
   },
+
+  // 7. LEGITIMATE — LinkedIn invitations
   {
     id: "e7",
     sender_name: "LinkedIn",
     sender_email: "messages-noreply@linkedin.com",
     to: "you@nipun.com",
-    subject: "You have 3 new connection requests",
+    subject: "You have 3 new invitations",
     received_at: "Yesterday, 1:30 PM",
-    body_html: `<p>You have 3 pending invitations to connect on LinkedIn.</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#0a66c2; padding:14px 22px;">
+          <span style="color:white;font-weight:600;font-size:18px;">Linked<span style="background:white;color:#0a66c2;padding:0 4px;border-radius:2px;">in</span></span>
+        </div>
+        <div style="padding:22px;">
+          <h3 style="margin:0 0 12px 0;">You have 3 pending invitations</h3>
+          <ul style="padding-left:18px; color:#262626;">
+            <li>Anita S. — Marketing Director at Wipro</li>
+            <li>Karan M. — Security Engineer at Razorpay</li>
+            <li>Meera J. — Recruiter at Microsoft</li>
+          </ul>
+          <p style="margin:22px 0;">${btn("See all invitations", "https://www.linkedin.com/mynetwork/invitation-manager/", "#0a66c2")}</p>
+          <p style="font-size:11px; color:#666;">You are receiving Invitation emails. Unsubscribe.</p>
+        </div>
+      </div>`,
     attachments: [],
-    links: [{ text: "See invitations", href: "https://www.linkedin.com/invitations" }],
+    links: [
+      {
+        text: "See all invitations",
+        href: "https://www.linkedin.com/mynetwork/invitation-manager/",
+      },
+    ],
     verdict: "legitimate",
-    rationale: "Standard LinkedIn notification from the real domain.",
+    rationale:
+      "Standard LinkedIn notification. Sender and link both belong to linkedin.com.",
   },
+
+  // 8. PHISHING — Bank security alert with hidden link
   {
     id: "e8",
-    sender_name: "Bank of Nipun",
-    sender_email: "security-alert@bankofnipun-secure.com",
+    sender_name: "HDFC Bank Online Banking",
+    sender_email: "alerts@hdfcbank-secure-services.com",
     to: "you@nipun.com",
-    subject: "Unusual sign-in detected on your corporate card",
+    subject: "Security alert: Unusual sign-in detected on your NetBanking account",
     received_at: "Today, 7:55 AM",
-    body_html: `<p>Dear Customer,</p><p>We detected an unusual sign-in attempt from <b>Lagos, Nigeria</b>. If this was not you, <a href="http://bankofnipun-secure.com/confirm">confirm your identity immediately</a>.</p><p>Failure to do so will result in account suspension within 12 hours.</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#004C8F; padding:14px 22px;">
+          <span style="color:white;font-weight:700;font-size:18px;letter-spacing:.5px;">HDFC BANK</span>
+        </div>
+        <div style="padding:22px;">
+          <p>Dear Customer,</p>
+          <p>We detected a sign-in attempt to your NetBanking account from a new device:</p>
+          <table style="margin:8px 0 14px 0; font-size:13px; color:#202124;">
+            <tr><td style="padding:2px 14px 2px 0; color:#5f6368;">Device:</td><td>Windows · Chrome 126</td></tr>
+            <tr><td style="padding:2px 14px 2px 0; color:#5f6368;">Location:</td><td>Lagos, Nigeria</td></tr>
+            <tr><td style="padding:2px 14px 2px 0; color:#5f6368;">Time:</td><td>Today, 7:48 AM IST</td></tr>
+          </table>
+          <p>If this <b>wasn't you</b>, secure your account immediately. Otherwise, your NetBanking access will be temporarily suspended within <b>12 hours</b> as a precaution.</p>
+          <p style="margin:22px 0;">${btn("Secure My Account", "http://hdfcbank-secure-services.com/netbanking/confirm", "#cc0000")}</p>
+          <p style="font-size:11px; color:#5f6368;">Never share your customer ID, password or OTP with anyone — including HDFC Bank staff.</p>
+        </div>
+      </div>`,
     attachments: [],
-    links: [{ text: "confirm your identity immediately", href: "http://bankofnipun-secure.com/confirm", suspicious: true }],
+    links: [
+      {
+        text: "Secure My Account",
+        href: "http://hdfcbank-secure-services.com/netbanking/confirm",
+        suspicious: true,
+      },
+    ],
     verdict: "phishing",
     expected_red_flags: [
-      { id: "lookalike_domain", label: "bankofnipun-secure.com is not your real bank domain", explanation: "Hyphenated look-alike domains are nearly always malicious." },
-      { id: "urgency", label: "12-hour deadline / suspension threat", explanation: "Banks don't suspend accounts over email links." },
-      { id: "scary_location", label: "Scary geo-location lure", explanation: "Designed to provoke a panic click." },
-      { id: "http_link", label: "Link uses http:// (not https)", explanation: "Real banks never send unencrypted login links." },
+      { id: "lookalike_domain", label: "hdfcbank-secure-services.com is not the real bank domain", explanation: "HDFC NetBanking lives on hdfcbank.com only — hyphenated look-alikes are nearly always malicious." },
+      { id: "urgency", label: "12-hour deadline / threat of suspension", explanation: "Banks don't suspend accounts via email links." },
+      { id: "scary_location", label: "Scary geo-location lure (\"Lagos, Nigeria\")", explanation: "Designed to provoke a panic click." },
+      { id: "http_link", label: "Link uses http:// — never used by real banks", explanation: "Real banks never send unencrypted login links." },
+      { id: "generic_greeting", label: "Generic \"Dear Customer\" greeting", explanation: "Your real bank knows your name." },
     ],
-    rationale: "Credential-phishing impersonating a bank; multiple urgency + look-alike domain cues.",
+    rationale:
+      "Credential-phishing impersonating a major Indian bank. Visual branding is close, but multiple cues — domain, http://, urgency, generic greeting — reveal the attack.",
   },
+
+  // 9. LEGITIMATE — internal colleague with ZIP (but slightly suspicious if you're not careful)
   {
     id: "e9",
-    sender_name: "Anita Sharma — Marketing",
+    sender_name: "Anita Sharma",
     sender_email: "anita.sharma@nipun.com",
     to: "you@nipun.com",
-    subject: "Final logo files for the campaign",
+    subject: "Re: Q3 campaign — final logo files attached",
     received_at: "Yesterday, 11:08 AM",
-    body_html: `<p>Hi,</p><p>Attached are the final logo files for the Q3 campaign. Let me know if you need other formats.</p><p>— Anita</p>`,
-    attachments: [{ name: "nipun-logo-final.zip", size: "1.2 MB" }],
+    body_html: `
+      <div style="${FONT}">
+        <p>Hey,</p>
+        <p>As discussed in yesterday's standup, attaching the final logo pack for the Q3 campaign — includes the dark, light and monochrome variants in SVG, PNG and EPS.</p>
+        <p>Let me know if you need anything resized or in a different format.</p>
+        <p>Thanks,<br/>Anita</p>
+        ${signature({
+          name: "Anita Sharma",
+          title: "Senior Designer — Brand Marketing",
+          email: "anita.sharma@nipun.com",
+          phone: "+91 98 1234 5678",
+        })}
+      </div>`,
+    attachments: [{ name: "Nipun_Q3_Logo_Pack_Final.zip", size: "1.2 MB" }],
     links: [],
     verdict: "legitimate",
-    rationale: "Expected internal collaboration, real domain, plausible attachment.",
+    rationale:
+      "Expected internal collaboration from the real domain. ZIP attachment is plausible for a designer sharing multiple assets. Reporting this as phishing is a false alarm.",
   },
+
+  // 10. SUSPICIOUS — Microsoft Teams voicemail (typosquatted, may not be true phishing)
   {
     id: "e10",
     sender_name: "Microsoft Teams",
     sender_email: "noreply@teams.microsfot.com",
     to: "you@nipun.com",
-    subject: "You missed a call from “HR_Onboarding”",
+    subject: "You missed a Teams call from \"HR_Onboarding\"",
     received_at: "Today, 6:21 AM",
-    body_html: `<p>You missed a call in Microsoft Teams. <a href="http://teams.microsfot.com/voicemail/abc">Listen to your voicemail</a> before it expires in 24 hours.</p>`,
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#464EB8; padding:14px 22px;">
+          <span style="color:white;font-weight:600;font-size:16px;">Microsoft Teams</span>
+        </div>
+        <div style="padding:22px;">
+          <p>You missed a call from <b>HR_Onboarding</b> at 6:18 AM. A voicemail (00:42) is waiting in your Teams inbox.</p>
+          <p>The recording will be available for <b>24 hours</b> before it expires.</p>
+          <p style="margin:22px 0;">${btn("Listen to Voicemail", "http://teams.microsfot.com/voicemail/abc")}</p>
+          <p style="font-size:11px; color:#5f6368;">This is an automated message. Do not reply.</p>
+        </div>
+      </div>`,
     attachments: [],
-    links: [{ text: "Listen to your voicemail", href: "http://teams.microsfot.com/voicemail/abc", suspicious: true }],
+    links: [
+      {
+        text: "Listen to Voicemail",
+        href: "http://teams.microsfot.com/voicemail/abc",
+        suspicious: true,
+      },
+    ],
     verdict: "suspicious",
     expected_red_flags: [
-      { id: "lookalike_domain", label: "microsfot.com (typo) is not microsoft.com", explanation: "Typosquatting domain." },
-      { id: "voicemail_lure", label: "Voicemail lure with expiry", explanation: "Common phishing pattern to trick users into clicking." },
+      { id: "lookalike_domain", label: "microsfot.com (typo) is not microsoft.com", explanation: "Typosquatting domain — easy to miss." },
+      { id: "voicemail_lure", label: "Voicemail with 24-hour expiry", explanation: "Common phishing pattern to encourage hurried clicks." },
+      { id: "http_link", label: "http:// instead of https://", explanation: "Real Microsoft links are always HTTPS." },
     ],
-    rationale: "Likely phishing — typosquatted Microsoft domain with a voicemail lure.",
+    rationale:
+      "Almost certainly phishing — typosquatted Microsoft domain with a voicemail lure. Even if it looks low-risk, treat as suspicious and report.",
   },
 ];
 
-// Redacted shape sent to the browser — strips verdicts/red-flag answers.
+// Redacted shape sent to the browser — strips verdicts / red-flag answers.
 export function getInboxClient() {
   return INBOX_EMAILS.map(({ verdict, expected_red_flags, rationale, ...rest }) => rest);
 }

@@ -199,6 +199,7 @@ function MailClient({
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
   function record(action_type: string, target?: string, meta?: any) {
     log({ data: { session_id: sessionId, action_type, target, meta } }).catch(() => {});
@@ -257,29 +258,35 @@ function MailClient({
       <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-2 text-primary-foreground">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Mail className="h-4 w-4" />
-          Nipun Corporate Mail
+          Nipun Corporate Mail — Inbox
         </div>
-        <button
-          onClick={onClose}
-          className="rounded p-1 hover:bg-white/20"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setConfirmSubmit(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground shadow hover:opacity-90"
+            title="Submit your investigation"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Submit Training
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded p-1 hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="grid flex-1 overflow-hidden md:grid-cols-[200px_320px_1fr]">
         {/* Folder nav */}
         <nav className="hidden border-r border-border bg-muted/50 p-3 text-sm md:block">
-          <button
-            onClick={() => setConfirmSubmit(true)}
-            className="mb-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:opacity-90"
-          >
-            <Send className="h-3.5 w-3.5" />
-            Submit Training
-          </button>
           <FolderItem icon={Inbox} active={folder === "inbox"} onClick={() => setFolder("inbox")}>
             Inbox <span className="ml-auto chip">{emails.length}</span>
+          </FolderItem>
+          <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
+            Starred
           </FolderItem>
           <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
             Starred
@@ -377,8 +384,9 @@ function MailClient({
               onClickLink={(href) => {
                 setClickedLinks((c) => (c.includes(href) ? c : [...c, href]));
                 record("click_link", href);
-                toast.warning("Link click recorded — link not opened in training.");
+                toast.warning(`Link click recorded — destination was ${href}. The link was not opened.`);
               }}
+              onHoverLink={setHoverUrl}
               onOpenAttachment={(name) => {
                 setOpenedAttachments((a) => (a.includes(name) ? a : [...a, name]));
                 record("open_attachment", name);
@@ -392,6 +400,23 @@ function MailClient({
           )}
         </div>
       </div>
+
+      {/* Browser-style hover URL status bar */}
+      {hoverUrl && (
+        <div className="pointer-events-none absolute bottom-0 left-0 z-20 max-w-[70%] truncate rounded-tr-md border-r border-t border-border bg-surface px-3 py-1.5 mono text-[11px] text-foreground shadow">
+          {hoverUrl}
+        </div>
+      )}
+
+      {/* Floating Submit Training button (always visible) */}
+      <button
+        onClick={() => setConfirmSubmit(true)}
+        className="absolute bottom-5 right-5 z-20 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-2xl ring-2 ring-white/30 hover:opacity-90"
+        title="Submit your investigation"
+      >
+        <Send className="h-4 w-4" />
+        Submit Training
+      </button>
 
       {reportingId && (
         <ReportForm
@@ -453,6 +478,7 @@ function ReadingPane({
   status,
   onRecord,
   onClickLink,
+  onHoverLink,
   onOpenAttachment,
   onReport,
 }: {
@@ -460,9 +486,14 @@ function ReadingPane({
   status: EmailStatus;
   onRecord: (action: string, target?: string) => void;
   onClickLink: (href: string) => void;
+  onHoverLink: (href: string | null) => void;
   onOpenAttachment: (name: string) => void;
   onReport: () => void;
 }) {
+  function closestAnchor(el: HTMLElement | null): HTMLAnchorElement | null {
+    while (el && el.tagName !== "A") el = el.parentElement;
+    return el as HTMLAnchorElement | null;
+  }
   return (
     <>
       <header className="border-b border-border p-5">
@@ -480,14 +511,19 @@ function ReadingPane({
         <div className="mt-2 mono text-xs text-muted-foreground">To: {email.to}</div>
       </header>
       <div
-        className="prose prose-sm max-w-none flex-1 overflow-y-auto p-6 text-sm leading-relaxed"
+        className="not-prose max-w-none flex-1 overflow-y-auto bg-white p-6 text-sm leading-relaxed text-[#202124]"
         onClickCapture={(ev) => {
-          const t = ev.target as HTMLElement;
-          if (t.tagName === "A") {
+          const a = closestAnchor(ev.target as HTMLElement);
+          if (a) {
             ev.preventDefault();
-            onClickLink((t as HTMLAnchorElement).href);
+            onClickLink(a.getAttribute("href") || a.href);
           }
         }}
+        onMouseOver={(ev) => {
+          const a = closestAnchor(ev.target as HTMLElement);
+          if (a) onHoverLink(a.getAttribute("href") || a.href);
+        }}
+        onMouseOut={() => onHoverLink(null)}
         dangerouslySetInnerHTML={{ __html: email.body_html }}
       />
       {email.attachments.length > 0 && (
@@ -675,7 +711,10 @@ function ReportForm({
                       checked={!!urls[l.href]}
                       onChange={(e) => setUrls((m) => ({ ...m, [l.href]: e.target.checked }))}
                     />
-                    <span className="mono break-all">{l.href}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-foreground">"{l.text}"</span>
+                      <span className="mono mt-0.5 block break-all text-muted-foreground">→ {l.href}</span>
+                    </span>
                   </label>
                 ))}
               </div>
@@ -760,8 +799,9 @@ function ConfirmDialog({
         </div>
         <h3 className="mt-4 text-lg font-semibold">Submit your investigation?</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          You are about to submit your investigation. After submission, your responses{" "}
-          <b className="text-foreground">cannot be modified</b>.
+          You are about to submit your investigation. After submission, your responses
+          will be <b className="text-foreground">locked and cannot be modified</b>. Are
+          you sure you want to continue?
         </p>
         <ul className="mt-4 space-y-1 rounded-md bg-muted p-3 text-sm">
           <li className="flex justify-between"><span>Emails reviewed</span><span className="mono">{reviewedCount}/{total}</span></li>
@@ -769,11 +809,11 @@ function ConfirmDialog({
         </ul>
         <div className="mt-5 flex gap-2">
           <button onClick={onCancel} disabled={submitting} className="flex-1 rounded-md border border-border bg-surface py-2 text-sm font-medium hover:bg-muted">
-            Keep investigating
+            Cancel
           </button>
           <button onClick={onConfirm} disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
             <CheckCircle2 className="h-4 w-4" />
-            {submitting ? "Submitting…" : "Submit Training"}
+            {submitting ? "Submitting…" : "Submit"}
           </button>
         </div>
       </div>
