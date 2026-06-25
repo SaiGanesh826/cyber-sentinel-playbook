@@ -71,10 +71,11 @@ function Dashboard() {
             </div>
             <span className="chip chip-success">ACTIVE</span>
           </div>
-          <h3 className="mt-4 text-lg font-semibold">Phishing Awareness Training</h3>
+          <h3 className="mt-4 text-lg font-semibold">Training</h3>
           <p className="mt-1 flex-1 text-sm text-muted-foreground">
             Enter the virtual office, investigate the 10 messages in your inbox, and submit
-            your investigation. You'll receive a personalized learning report.
+            your investigation. You'll receive a personalized learning report. More
+            cybersecurity training modules will be added to this section soon.
           </p>
           <Link
             to="/training/$slug"
