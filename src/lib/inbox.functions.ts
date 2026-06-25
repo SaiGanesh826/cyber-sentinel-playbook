@@ -120,6 +120,8 @@ const submitInputSchema = z.object({
   opened_email_ids: z.array(z.string()).max(40).default([]),
   clicked_link_urls: z.array(z.string()).max(80).default([]),
   opened_attachment_names: z.array(z.string()).max(40).default([]),
+  mfa_completed: z.boolean().default(false),
+  auto_submitted: z.boolean().default(false),
 });
 
 export const submitInboxTraining = createServerFn({ method: "POST" })
