@@ -20,7 +20,17 @@ export const startInboxSession = createServerFn({ method: "POST" })
     if (!profile || profile.status !== "active")
       throw new Error("Account is not active");
 
-    // pick the phishing-inbox module (or any enabled phishing module)
+    // RESUME: if an in-progress session already exists for this user, return it
+    const { data: existing } = await supabaseAdmin
+      .from("game_sessions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) return { session_id: existing.id, resumed: true };
+
     const { data: mod } = await supabaseAdmin
       .from("training_modules")
       .select("id")
@@ -48,7 +58,7 @@ export const startInboxSession = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
-    return { session_id: session.id };
+    return { session_id: session.id, resumed: false };
   });
 
 
