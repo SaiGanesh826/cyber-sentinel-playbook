@@ -267,7 +267,7 @@ function MailClient({
             title="Submit your investigation"
           >
             <Send className="h-3.5 w-3.5" />
-            Submit Training
+            Submit Investigation
           </button>
           <button
             onClick={onClose}
