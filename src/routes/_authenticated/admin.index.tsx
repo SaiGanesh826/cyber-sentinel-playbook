@@ -49,9 +49,6 @@ function AdminOverview() {
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">Admin console</h1>
       <p className="mt-1 text-sm text-muted-foreground">Operations overview for Nipun Cybersecurity Awareness.</p>
 
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        SOC operations center
-      </h1>
 
       <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -94,6 +91,15 @@ function AdminOverview() {
           body="Author, edit, and toggle the email scenarios employees train on."
           icon={FileWarning}
         />
+        {isSuper && (
+          <AdminCard
+            to="/admin/administrators"
+            title="Administrator management"
+            body="Create, promote, demote, and remove administrators. Super Admin only."
+            icon={ShieldCheck}
+          />
+        )}
+
         <AdminCard
           to="/admin/reports"
           title="Reports & analytics"
