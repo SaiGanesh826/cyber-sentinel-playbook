@@ -34,13 +34,15 @@ export const startInboxSession = createServerFn({ method: "POST" })
       .select("id")
       .limit(1)
       .maybeSingle();
+    if (!mod?.id || !scenario?.id)
+      throw new Error("Training module not configured. Ask an administrator.");
 
     const { data: session, error } = await supabaseAdmin
       .from("game_sessions")
       .insert({
         user_id: userId,
-        scenario_id: scenario?.id ?? null,
-        module_id: mod?.id ?? null,
+        scenario_id: scenario.id,
+        module_id: mod.id,
         status: "in_progress",
       })
       .select()
@@ -48,6 +50,7 @@ export const startInboxSession = createServerFn({ method: "POST" })
     if (error) throw error;
     return { session_id: session.id };
   });
+
 
 // ============================================================
 // Log a behavioral action (open email, click link, open attachment, etc.)
