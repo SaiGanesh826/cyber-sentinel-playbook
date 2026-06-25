@@ -28,12 +28,8 @@ function Landing() {
     <div className="relative isolate min-h-screen overflow-hidden">
       <div className="absolute inset-0 soc-grid opacity-30 pointer-events-none" />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link to="/" className="flex items-center gap-3">
-          <NipunLogo className="h-10 w-auto" />
-          <div className="leading-tight border-l border-border pl-3">
-            <div className="font-semibold tracking-tight text-sm">Cybersecurity Awareness</div>
-            <div className="mono text-[10px] text-muted-foreground">Internal training platform</div>
-          </div>
+        <Link to="/" className="flex items-center" aria-label="Nipun home">
+          <NipunLogo className="h-14 w-auto" />
         </Link>
         <nav className="flex items-center gap-3">
           <Link
