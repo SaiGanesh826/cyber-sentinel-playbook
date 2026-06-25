@@ -88,17 +88,10 @@ function Landing() {
                 inbox · employee@nipun.com
               </span>
             </div>
-            <div className="rounded-md bg-muted p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="mono">From: hr-payroll@nlpun-support.com</span>
-                <span className="chip chip-warn">SUSPICIOUS</span>
-              </div>
-              <h3 className="mt-3 text-lg font-semibold">
-                URGENT: Verify your payroll details by today 5PM
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Dear Employee, our records show your direct-deposit information is
-                out of date. Please verify your account within 4 hours…
+            <div className="flex flex-col items-center justify-center rounded-md bg-muted px-5 py-12">
+              <NipunLogo className="h-32 w-auto" />
+              <p className="mono mt-6 text-center text-xs text-muted-foreground">
+                Nipun · Internal Cybersecurity Awareness
               </p>
             </div>
           </div>
