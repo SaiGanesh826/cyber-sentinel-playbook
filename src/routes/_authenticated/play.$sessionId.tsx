@@ -408,15 +408,6 @@ function MailClient({
         </div>
       )}
 
-      {/* Floating Submit Training button (always visible) */}
-      <button
-        onClick={() => setConfirmSubmit(true)}
-        className="absolute bottom-5 right-5 z-20 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-2xl ring-2 ring-white/30 hover:opacity-90"
-        title="Submit your investigation"
-      >
-        <Send className="h-4 w-4" />
-        Submit Training
-      </button>
 
       {reportingId && (
         <ReportForm
