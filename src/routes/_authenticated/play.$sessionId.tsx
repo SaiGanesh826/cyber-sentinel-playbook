@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,9 @@ import {
   Paperclip,
   X,
   CheckCircle2,
+  ShieldCheck,
+  Smartphone,
+  Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/play/$sessionId")({
@@ -60,10 +63,38 @@ const RED_FLAG_CATALOG: { id: string; label: string }[] = [
   { id: "grammar", label: "Spelling or grammar issues" },
 ];
 
+// 1 hour training duration
+const TRAINING_DURATION_MS = 60 * 60 * 1000;
+
+interface PersistedState {
+  statuses: Record<string, EmailStatus>;
+  reports: Record<string, IncidentReport>;
+  openedAttachments: string[];
+  clickedLinks: string[];
+  visitedMaliciousLinks: string[];
+  selectedId: string | null;
+  mfaCompleted: boolean;
+  endsAt: number; // epoch ms
+}
+
+function storageKey(sessionId: string) {
+  return `nipun-training:${sessionId}`;
+}
+
+function loadState(sessionId: string): PersistedState | null {
+  try {
+    const raw = localStorage.getItem(storageKey(sessionId));
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedState;
+  } catch {
+    return null;
+  }
+}
+
 function VirtualOffice() {
   const { sessionId } = Route.useParams();
   const emails = useMemo(() => getInboxClient(), []);
-  const [appOpen, setAppOpen] = useState<"none" | "mail">("none");
+  const [appOpen, setAppOpen] = useState<"none" | "mail">("mail");
   const [clock, setClock] = useState(new Date());
 
   useEffect(() => {
@@ -73,7 +104,6 @@ function VirtualOffice() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#1f4170] text-white">
-      {/* Wallpaper */}
       <div
         className="absolute inset-0"
         style={{
@@ -82,7 +112,6 @@ function VirtualOffice() {
         }}
       />
       <div className="relative z-10 flex h-full flex-col">
-        {/* Desktop icons */}
         <div className="flex-1 p-6">
           <div className="absolute right-6 top-6 flex items-center gap-3 rounded-md bg-white/95 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur">
             <NipunLogo className="h-10 w-auto" />
@@ -101,7 +130,6 @@ function VirtualOffice() {
           </div>
         </div>
 
-        {/* Taskbar */}
         <div className="flex h-12 items-center gap-2 border-t border-white/10 bg-black/40 px-3 backdrop-blur">
           <button
             onClick={() => setAppOpen("mail")}
@@ -189,17 +217,76 @@ function MailClient({
   const log = useServerFn(logInboxAction);
   const submit = useServerFn(submitInboxTraining);
 
-  const [statuses, setStatuses] = useState<Record<string, EmailStatus>>({});
-  const [reports, setReports] = useState<Record<string, IncidentReport>>({});
-  const [openedAttachments, setOpenedAttachments] = useState<string[]>([]);
-  const [clickedLinks, setClickedLinks] = useState<string[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Initialize from localStorage (resume) or fresh state
+  const initial = useMemo<PersistedState>(() => {
+    if (typeof window === "undefined") {
+      return {
+        statuses: {}, reports: {}, openedAttachments: [], clickedLinks: [],
+        visitedMaliciousLinks: [], selectedId: null, mfaCompleted: false,
+        endsAt: Date.now() + TRAINING_DURATION_MS,
+      };
+    }
+    const saved = loadState(sessionId);
+    if (saved) {
+      return saved;
+    }
+    return {
+      statuses: {}, reports: {}, openedAttachments: [], clickedLinks: [],
+      visitedMaliciousLinks: [], selectedId: null, mfaCompleted: false,
+      endsAt: Date.now() + TRAINING_DURATION_MS,
+    };
+  }, [sessionId]);
+
+  const [statuses, setStatuses] = useState<Record<string, EmailStatus>>(initial.statuses);
+  const [reports, setReports] = useState<Record<string, IncidentReport>>(initial.reports);
+  const [openedAttachments, setOpenedAttachments] = useState<string[]>(initial.openedAttachments);
+  const [clickedLinks, setClickedLinks] = useState<string[]>(initial.clickedLinks);
+  const [visitedMaliciousLinks, setVisitedMaliciousLinks] = useState<string[]>(initial.visitedMaliciousLinks);
+  const [selectedId, setSelectedId] = useState<string | null>(initial.selectedId);
+  const [mfaCompleted, setMfaCompleted] = useState<boolean>(initial.mfaCompleted);
+  const [endsAt] = useState<number>(initial.endsAt);
+
   const [search, setSearch] = useState("");
   const [folder, setFolder] = useState<"inbox" | "sent" | "drafts" | "trash">("inbox");
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hoverUrl, setHoverUrl] = useState<string | null>(null);
+  const [phishWarning, setPhishWarning] = useState<{ href: string } | null>(null);
+  const [mfaOpen, setMfaOpen] = useState(false);
+  const [now, setNow] = useState<number>(Date.now());
+
+  // Toast resume notice once
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (resumedRef.current) return;
+    resumedRef.current = true;
+    const saved = typeof window !== "undefined" ? loadState(sessionId) : null;
+    if (saved && (Object.keys(saved.statuses).length > 0 || saved.mfaCompleted)) {
+      toast.success("Training session restored successfully. You have resumed from your last saved progress.");
+    }
+  }, [sessionId]);
+
+  // Persist on every change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload: PersistedState = {
+      statuses, reports, openedAttachments, clickedLinks, visitedMaliciousLinks,
+      selectedId, mfaCompleted, endsAt,
+    };
+    try {
+      localStorage.setItem(storageKey(sessionId), JSON.stringify(payload));
+    } catch {/* ignore */}
+  }, [sessionId, statuses, reports, openedAttachments, clickedLinks, visitedMaliciousLinks, selectedId, mfaCompleted, endsAt]);
+
+  // Timer tick
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  const timeRemainingMs = Math.max(0, endsAt - now);
+  const expired = timeRemainingMs <= 0;
 
   function record(action_type: string, target?: string, meta?: any) {
     log({ data: { session_id: sessionId, action_type, target, meta } }).catch(() => {});
@@ -218,7 +305,33 @@ function MailClient({
     toast.success("Reported to Security. You can continue investigating other emails.");
   }
 
-  async function doSubmitTraining() {
+  function handleLinkClick(href: string) {
+    // Internal app action — MFA setup
+    if (href === "app:enable-mfa") {
+      record("open_mfa_wizard");
+      setMfaOpen(true);
+      return;
+    }
+    // Already recorded as click
+    if (!clickedLinks.includes(href)) {
+      setClickedLinks((c) => [...c, href]);
+    }
+    record("click_link", href);
+
+    // Is this a known malicious link?
+    const isMalicious = emails.some((e) => e.links.some((l) => l.suspicious && l.href === href));
+    if (isMalicious) {
+      if (!visitedMaliciousLinks.includes(href)) {
+        setVisitedMaliciousLinks((v) => [...v, href]);
+      }
+      record("phishing_simulation_triggered", href);
+      setPhishWarning({ href });
+    } else {
+      toast.warning(`Link click recorded — destination was ${href}. The link was not opened.`);
+    }
+  }
+
+  async function doSubmitTraining(auto = false) {
     setSubmitting(true);
     try {
       const res = await submit({
@@ -228,8 +341,11 @@ function MailClient({
           opened_email_ids: Object.keys(statuses),
           clicked_link_urls: clickedLinks,
           opened_attachment_names: openedAttachments,
+          mfa_completed: mfaCompleted,
+          auto_submitted: auto,
         },
       });
+      try { localStorage.removeItem(storageKey(sessionId)); } catch {/* ignore */}
       navigate({ to: "/results/$sessionId", params: { sessionId: res.session_id } });
     } catch (e: any) {
       toast.error(e?.message ?? "Submission failed");
@@ -237,6 +353,16 @@ function MailClient({
       setConfirmSubmit(false);
     }
   }
+
+  // Auto-submit on timer expiry
+  const autoSubmittedRef = useRef(false);
+  useEffect(() => {
+    if (!expired || autoSubmittedRef.current || submitting) return;
+    autoSubmittedRef.current = true;
+    toast.warning("Time is up. Auto-submitting your investigation.");
+    doSubmitTraining(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expired]);
 
   const filtered = emails.filter((e) =>
     folder !== "inbox"
@@ -249,6 +375,10 @@ function MailClient({
   );
 
   const selected = emails.find((e) => e.id === selectedId);
+  const totalTasks = emails.length + 1; // emails + MFA task
+  const completedTasks =
+    Object.keys(statuses).length + (mfaCompleted ? 1 : 0);
+  const remainingTasks = Math.max(0, totalTasks - completedTasks);
   const reviewedCount = Object.keys(statuses).length;
   const reportedCount = Object.keys(reports).length;
 
@@ -279,14 +409,19 @@ function MailClient({
         </div>
       </div>
 
+      {/* Training Progress + Timer bar (fixed at top of training interface) */}
+      <TrainingProgressBar
+        completed={completedTasks}
+        total={totalTasks}
+        remaining={remainingTasks}
+        timeRemainingMs={timeRemainingMs}
+      />
+
       <div className="grid flex-1 overflow-hidden md:grid-cols-[200px_320px_1fr]">
         {/* Folder nav */}
         <nav className="hidden border-r border-border bg-muted/50 p-3 text-sm md:block">
           <FolderItem icon={Inbox} active={folder === "inbox"} onClick={() => setFolder("inbox")}>
             Inbox <span className="ml-auto chip">{emails.length}</span>
-          </FolderItem>
-          <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
-            Starred
           </FolderItem>
           <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
             Starred
@@ -304,9 +439,15 @@ function MailClient({
             Trash
           </FolderItem>
           <div className="mt-6 rounded-md border border-border bg-surface p-3 text-xs">
-            <div className="font-medium">Progress</div>
+            <div className="font-medium">Activity</div>
             <div className="mt-1 text-muted-foreground">Reviewed: {reviewedCount}/{emails.length}</div>
             <div className="text-muted-foreground">Reported: {reportedCount}</div>
+            <div className="mt-1 inline-flex items-center gap-1 text-xs">
+              <ShieldCheck className={`h-3 w-3 ${mfaCompleted ? "text-emerald-600" : "text-muted-foreground"}`} />
+              <span className={mfaCompleted ? "text-emerald-700 font-medium" : "text-muted-foreground"}>
+                MFA {mfaCompleted ? "enabled" : "pending"}
+              </span>
+            </div>
           </div>
         </nav>
 
@@ -380,12 +521,9 @@ function MailClient({
             <ReadingPane
               email={selected}
               status={statuses[selected.id] ?? "opened"}
+              visitedLinks={visitedMaliciousLinks}
               onRecord={record}
-              onClickLink={(href) => {
-                setClickedLinks((c) => (c.includes(href) ? c : [...c, href]));
-                record("click_link", href);
-                toast.warning(`Link click recorded — destination was ${href}. The link was not opened.`);
-              }}
+              onClickLink={handleLinkClick}
               onHoverLink={setHoverUrl}
               onOpenAttachment={(name) => {
                 setOpenedAttachments((a) => (a.includes(name) ? a : [...a, name]));
@@ -401,13 +539,11 @@ function MailClient({
         </div>
       </div>
 
-      {/* Browser-style hover URL status bar */}
       {hoverUrl && (
         <div className="pointer-events-none absolute bottom-0 left-0 z-20 max-w-[70%] truncate rounded-tr-md border-r border-t border-border bg-surface px-3 py-1.5 mono text-[11px] text-foreground shadow">
           {hoverUrl}
         </div>
       )}
-
 
       {reportingId && (
         <ReportForm
@@ -425,9 +561,72 @@ function MailClient({
           reviewedCount={reviewedCount}
           total={emails.length}
           onCancel={() => setConfirmSubmit(false)}
-          onConfirm={doSubmitTraining}
+          onConfirm={() => doSubmitTraining(false)}
         />
       )}
+
+      {phishWarning && (
+        <PhishingSimulationModal
+          href={phishWarning.href}
+          onAcknowledge={() => setPhishWarning(null)}
+        />
+      )}
+
+      {mfaOpen && (
+        <MfaWizard
+          alreadyCompleted={mfaCompleted}
+          onClose={() => setMfaOpen(false)}
+          onComplete={() => {
+            setMfaCompleted(true);
+            record("mfa_completed");
+            setMfaOpen(false);
+            toast.success("Multi-Factor Authentication enabled. Good security practice — bonus points awarded.");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function TrainingProgressBar({
+  completed, total, remaining, timeRemainingMs,
+}: {
+  completed: number; total: number; remaining: number; timeRemainingMs: number;
+}) {
+  const totalSec = Math.floor(timeRemainingMs / 1000);
+  const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  const ss = String(totalSec % 60).padStart(2, "0");
+  const lowTime = timeRemainingMs < 5 * 60 * 1000; // last 5 minutes
+  const pct = Math.round((completed / total) * 100);
+  return (
+    <div className="flex flex-wrap items-center gap-4 border-b border-border bg-muted/60 px-4 py-2 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Training Progress
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">Completed:</span>
+        <span className="font-semibold">{completed} / {total}</span>
+        <span className="text-muted-foreground">tasks</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">Remaining:</span>
+        <span className="font-semibold">{remaining}</span>
+      </div>
+      <div className="hidden h-1.5 min-w-[120px] flex-1 overflow-hidden rounded-full bg-border sm:block">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className={`ml-auto inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 mono text-xs font-semibold ${
+        lowTime ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-surface border border-border text-foreground"
+      }`}>
+        <Clock className="h-3.5 w-3.5" />
+        {hh}:{mm}:{ss}
+      </div>
     </div>
   );
 }
@@ -467,6 +666,7 @@ function StatusBadge({ status }: { status: EmailStatus }) {
 function ReadingPane({
   email,
   status,
+  visitedLinks,
   onRecord,
   onClickLink,
   onHoverLink,
@@ -475,6 +675,7 @@ function ReadingPane({
 }: {
   email: InboxClientEmail;
   status: EmailStatus;
+  visitedLinks: string[];
   onRecord: (action: string, target?: string) => void;
   onClickLink: (href: string) => void;
   onHoverLink: (href: string | null) => void;
@@ -485,6 +686,7 @@ function ReadingPane({
     while (el && el.tagName !== "A") el = el.parentElement;
     return el as HTMLAnchorElement | null;
   }
+  const visitedBanner = email.links.some((l) => visitedLinks.includes(l.href));
   return (
     <>
       <header className="border-b border-border p-5">
@@ -500,6 +702,12 @@ function ReadingPane({
           <div className="ml-auto mono text-xs text-muted-foreground">{email.received_at}</div>
         </div>
         <div className="mt-2 mono text-xs text-muted-foreground">To: {email.to}</div>
+        {visitedBanner && (
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            You clicked a malicious link in this email during the simulation.
+          </div>
+        )}
       </header>
       <div
         className="not-prose max-w-none flex-1 overflow-y-auto bg-white p-6 text-sm leading-relaxed text-[#202124]"
@@ -568,6 +776,232 @@ function Toolbar({ icon: Icon, onClick, children }: { icon: any; onClick: () => 
 }
 
 // ============================================================
+// PHISHING ATTACK SIMULATION POPUP — blocks all interaction
+// ============================================================
+function PhishingSimulationModal({
+  href, onAcknowledge,
+}: { href: string; onAcknowledge: () => void }) {
+  return (
+    <div className="absolute inset-0 z-[60] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-lg border-2 border-destructive bg-surface text-foreground shadow-2xl">
+        <div className="flex items-center gap-3 rounded-t-lg bg-destructive px-5 py-4 text-destructive-foreground">
+          <AlertTriangle className="h-7 w-7" />
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider opacity-90">Training Simulation</div>
+            <h3 className="text-lg font-bold">⚠️ Phishing Attack Simulated</h3>
+          </div>
+        </div>
+        <div className="space-y-3 p-5 text-sm">
+          <p className="font-semibold text-destructive">You clicked a malicious link.</p>
+          <div className="mono break-all rounded-md bg-muted px-2.5 py-1.5 text-[11px] text-muted-foreground">{href}</div>
+          <p className="text-foreground">In a real-world attack, this action could have:</p>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <li>Stolen your credentials.</li>
+            <li>Installed malware on your device.</li>
+            <li>Redirected you to a fake login page.</li>
+            <li>Compromised your organization's data.</li>
+          </ul>
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+            <div className="mb-1 font-semibold text-foreground">Remember:</div>
+            <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+              <li>Verify the sender before clicking.</li>
+              <li>Hover over links to inspect the destination URL.</li>
+              <li>Report suspicious emails instead of interacting with them.</li>
+            </ul>
+          </div>
+          <div className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">
+            <span>Score Penalty</span>
+            <span>−50 Points</span>
+          </div>
+        </div>
+        <div className="border-t border-border p-4">
+          <button
+            autoFocus
+            onClick={onAcknowledge}
+            className="w-full rounded-md bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90"
+          >
+            Acknowledge
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MFA SETUP WIZARD
+// ============================================================
+function MfaWizard({
+  alreadyCompleted, onClose, onComplete,
+}: { alreadyCompleted: boolean; onClose: () => void; onComplete: () => void }) {
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(alreadyCompleted ? 4 : 1);
+  const [method, setMethod] = useState<"authenticator" | "sms" | "email">("authenticator");
+  const [code, setCode] = useState("");
+  // Generated reference code shown next to the simulated QR
+  const verificationCode = useMemo(
+    () => String(Math.floor(100000 + Math.random() * 900000)),
+    [],
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  function verify() {
+    if (code.trim() === verificationCode) {
+      setStep(4);
+      setError(null);
+      // brief delay so user sees success screen
+      setTimeout(() => onComplete(), 1200);
+    } else {
+      setError("Incorrect code. Open your authenticator app and enter the 6-digit code displayed for this account.");
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-lg overflow-hidden rounded-lg bg-surface text-foreground shadow-2xl">
+        <div className="flex items-center justify-between bg-[#0078d4] px-5 py-3 text-white">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5" />
+            <div className="text-sm font-semibold">Microsoft 365 · Security Setup</div>
+          </div>
+          <button onClick={onClose} className="rounded p-1 hover:bg-white/20"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="p-6 text-sm">
+          {step === 1 && (
+            <>
+              <h3 className="text-lg font-semibold">Set up Multi-Factor Authentication</h3>
+              <p className="mt-1 text-muted-foreground">Choose how you want to receive your verification codes.</p>
+              <div className="mt-5 space-y-2">
+                {[
+                  { v: "authenticator", title: "Authenticator app", desc: "Microsoft Authenticator or Google Authenticator (recommended).", icon: Smartphone },
+                  { v: "sms", title: "Text message (SMS)", desc: "Receive a code via SMS to your mobile number.", icon: Smartphone },
+                  { v: "email", title: "Backup email", desc: "Receive a code at a backup email address.", icon: Mail },
+                ].map(({ v, title, desc, icon: Icon }) => (
+                  <label
+                    key={v}
+                    className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition ${
+                      method === v ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="mfa-method"
+                      className="mt-1"
+                      checked={method === v}
+                      onChange={() => setMethod(v as any)}
+                    />
+                    <Icon className="mt-0.5 h-5 w-5 text-primary" />
+                    <span>
+                      <span className="block font-medium text-foreground">{title}</span>
+                      <span className="block text-xs text-muted-foreground">{desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">Cancel</button>
+                <button onClick={() => setStep(2)} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">Next</button>
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <h3 className="text-lg font-semibold">Scan the QR code</h3>
+              <p className="mt-1 text-muted-foreground">Open your authenticator app and scan this QR code to add your Nipun corporate account.</p>
+              <div className="mt-5 grid place-items-center rounded-md border border-border bg-white p-6">
+                <SimulatedQR />
+                <div className="mt-3 text-center text-xs text-muted-foreground">
+                  Can't scan? Use this setup key:
+                  <div className="mono mt-1 select-all text-foreground">NPUN-MFA-{verificationCode}-CORP</div>
+                </div>
+              </div>
+              <div className="mt-5 flex justify-between gap-2">
+                <button onClick={() => setStep(1)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">Back</button>
+                <button onClick={() => setStep(3)} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">I've scanned it</button>
+              </div>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <h3 className="text-lg font-semibold">Enter verification code</h3>
+              <p className="mt-1 text-muted-foreground">
+                Open your authenticator app and enter the 6-digit code shown for the Nipun corporate account.
+              </p>
+              <div className="mt-3 rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <b className="text-foreground">Simulation tip:</b> for this training, the authenticator app is showing
+                <span className="mono mx-1 rounded bg-foreground px-1.5 py-0.5 text-background">{verificationCode}</span>
+              </div>
+              <input
+                value={code}
+                onChange={(e) => { setCode(e.target.value); setError(null); }}
+                maxLength={6}
+                inputMode="numeric"
+                placeholder="123456"
+                className="mt-4 w-full rounded-md border border-border bg-surface px-3 py-2 mono text-center text-lg tracking-[0.4em] outline-none focus:border-primary"
+              />
+              {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+              <div className="mt-5 flex justify-between gap-2">
+                <button onClick={() => setStep(2)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">Back</button>
+                <button
+                  onClick={verify}
+                  disabled={code.length !== 6}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  Verify & Enable
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 4 && (
+            <div className="py-6 text-center">
+              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">MFA enabled</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your account is now protected with Multi-Factor Authentication.
+                {alreadyCompleted ? "" : " Bonus points awarded for following security best practice."}
+              </p>
+              {alreadyCompleted && (
+                <button onClick={onClose} className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                  Close
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SimulatedQR() {
+  // Deterministic 11x11 pattern for a believable QR look
+  const cells = [];
+  const size = 11;
+  const seed = (x: number, y: number) => ((x * 31 + y * 17 + x * y) ^ ((x + 1) * (y + 2))) % 2 === 0;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const corner = (x < 3 && y < 3) || (x > size - 4 && y < 3) || (x < 3 && y > size - 4);
+      const on = corner ? !(x === 1 && y === 1) && !(x === size - 2 && y === 1) && !(x === 1 && y === size - 2)
+        ? (x === 0 || y === 0 || x === 2 || y === 2 || (x < 3 && y < 3) || (x > size - 4 && y < 3) || (x < 3 && y > size - 4))
+        : true
+        : seed(x, y);
+      cells.push(<rect key={`${x}-${y}`} x={x * 10} y={y * 10} width={10} height={10} fill={on ? "#111" : "transparent"} />);
+    }
+  }
+  return (
+    <svg viewBox={`0 0 ${size * 10} ${size * 10}`} width="160" height="160" className="rounded-sm">
+      <rect width="100%" height="100%" fill="#fff" />
+      {cells}
+    </svg>
+  );
+}
+
+// ============================================================
 // REPORT FORM
 // ============================================================
 
@@ -616,7 +1050,6 @@ function ReportForm({
       summary,
     };
     onSubmit(report);
-    // Note attachment evidence in summary metadata if any
     void attachmentsBad;
   }
 

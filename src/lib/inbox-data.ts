@@ -461,6 +461,41 @@ export const INBOX_EMAILS: InboxEmail[] = [
     rationale:
       "Almost certainly phishing — typosquatted Microsoft domain with a voicemail lure. Even if it looks low-risk, treat as suspicious and report.",
   },
+
+  // 11. LEGITIMATE — IT Security MFA enrollment (rewarded task)
+  {
+    id: "e11",
+    sender_name: "Nipun IT Security",
+    sender_email: "it-security@nipun.com",
+    to: "you@nipun.com",
+    subject: "Action Required: Enable Multi-Factor Authentication for Your Corporate Account",
+    received_at: "Today, 8:10 AM",
+    body_html: `
+      <div style="${FONT}">
+        <div style="background:#1f4170; padding:14px 22px;">
+          <span style="color:white;font-weight:700;font-size:16px;letter-spacing:.3px;">Nipun · IT Security</span>
+        </div>
+        <div style="padding:22px;">
+          <p>Hi,</p>
+          <p>As part of our updated security policy, all employees must enable
+          <b>Multi-Factor Authentication (MFA)</b> on their Nipun corporate account by the end of this week.</p>
+          <p>MFA protects your account even if your password is stolen — it takes about a minute to set up using the Microsoft Authenticator or Google Authenticator app.</p>
+          <p style="margin:22px 0;">${btn("Enable MFA", "app:enable-mfa", "#1f4170")}</p>
+          <p style="font-size:12px;color:#5f6368;">If you have any trouble, reply to this email or raise a ticket on the IT Service Desk.</p>
+          ${signature({
+            name: "Arjun Verma",
+            title: "Manager — IT Security",
+            email: "it-security@nipun.com",
+            phone: "+91 80 4000 1900",
+          })}
+        </div>
+      </div>`,
+    attachments: [],
+    links: [{ text: "Enable MFA", href: "app:enable-mfa" }],
+    verdict: "legitimate",
+    rationale:
+      "Genuine internal IT-Security communication asking employees to enable MFA — a positive security behavior. Completing the MFA setup is rewarded.",
+  },
 ];
 
 // Redacted shape sent to the browser — strips verdicts / red-flag answers.

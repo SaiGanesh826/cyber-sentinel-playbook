@@ -20,7 +20,17 @@ export const startInboxSession = createServerFn({ method: "POST" })
     if (!profile || profile.status !== "active")
       throw new Error("Account is not active");
 
-    // pick the phishing-inbox module (or any enabled phishing module)
+    // RESUME: if an in-progress session already exists for this user, return it
+    const { data: existing } = await supabaseAdmin
+      .from("game_sessions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) return { session_id: existing.id, resumed: true };
+
     const { data: mod } = await supabaseAdmin
       .from("training_modules")
       .select("id")
@@ -48,7 +58,7 @@ export const startInboxSession = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw error;
-    return { session_id: session.id };
+    return { session_id: session.id, resumed: false };
   });
 
 
@@ -110,6 +120,8 @@ const submitInputSchema = z.object({
   opened_email_ids: z.array(z.string()).max(40).default([]),
   clicked_link_urls: z.array(z.string()).max(80).default([]),
   opened_attachment_names: z.array(z.string()).max(40).default([]),
+  mfa_completed: z.boolean().default(false),
+  auto_submitted: z.boolean().default(false),
 });
 
 export const submitInboxTraining = createServerFn({ method: "POST" })
@@ -224,8 +236,11 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
     const openedMalicious = data.opened_attachment_names.filter((n) =>
       INBOX_EMAILS.some((e) => e.attachments.some((a) => a.suspicious && a.name === n)),
     );
-    totalPoints -= clickedSuspicious.length * 4;
-    totalPoints -= openedMalicious.length * 4;
+    totalPoints -= clickedSuspicious.length * 50; // Phishing simulation: -50 per malicious click
+    totalPoints -= openedMalicious.length * 50;
+
+    // MFA bonus — enabling MFA is a positive security behavior
+    if (data.mfa_completed) totalPoints += 10;
 
     // normalize to /100
     const rawMax = maxPoints;
@@ -260,6 +275,9 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
       strengths.push(`Did not raise any false alarms on legitimate mail (${totalGood}/${totalGood}).`);
     if (clickedSuspicious.length === 0) strengths.push("Did not click any malicious link.");
     if (openedMalicious.length === 0) strengths.push("Did not open any malicious attachment.");
+    if (data.mfa_completed) strengths.push("Enabled Multi-Factor Authentication — strong security hygiene.");
+    if (data.auto_submitted) weaknesses.push("Training was auto-submitted when the timer expired — try to pace yourself within the hour.");
+    if (!data.mfa_completed) weaknesses.push("Did not enable Multi-Factor Authentication when IT requested it.");
 
     if (missedEmails.length > 0)
       weaknesses.push(`Missed ${missedEmails.length} phishing / suspicious email${missedEmails.length === 1 ? "" : "s"} — review the missed indicators.`);
@@ -298,6 +316,8 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
         missed_count: missedEmails.length,
         clicked_suspicious_links: clickedSuspicious,
         opened_malicious_attachments: openedMalicious,
+        mfa_completed: data.mfa_completed,
+        auto_submitted: data.auto_submitted,
       },
       correct_reported: correctReported,
       incorrect_reported: incorrectReported,
