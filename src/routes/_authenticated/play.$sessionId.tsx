@@ -809,11 +809,11 @@ function ConfirmDialog({
         </ul>
         <div className="mt-5 flex gap-2">
           <button onClick={onCancel} disabled={submitting} className="flex-1 rounded-md border border-border bg-surface py-2 text-sm font-medium hover:bg-muted">
-            Keep investigating
+            Cancel
           </button>
           <button onClick={onConfirm} disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
             <CheckCircle2 className="h-4 w-4" />
-            {submitting ? "Submitting…" : "Submit Training"}
+            {submitting ? "Submitting…" : "Submit"}
           </button>
         </div>
       </div>
