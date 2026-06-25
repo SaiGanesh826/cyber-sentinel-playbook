@@ -65,7 +65,7 @@ function MissionBriefing() {
               </li>
               <li>
                 Your investigation will be evaluated only after you click{" "}
-                <b className="text-foreground">Submit Training</b>.
+                <b className="text-foreground">Submit Investigation</b>.
               </li>
             </ul>
           </div>
