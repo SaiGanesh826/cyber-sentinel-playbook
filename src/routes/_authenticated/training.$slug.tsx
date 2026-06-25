@@ -32,7 +32,7 @@ function MissionBriefing() {
       </Link>
       <span className="chip mt-4">MISSION BRIEFING</span>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        Phishing Awareness — Inbox Investigation
+        Training — Inbox Investigation
       </h1>
       <p className="mt-3 text-muted-foreground">
         You are about to enter a virtual workstation. Treat this exactly like a normal
