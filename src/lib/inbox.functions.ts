@@ -275,6 +275,9 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
       strengths.push(`Did not raise any false alarms on legitimate mail (${totalGood}/${totalGood}).`);
     if (clickedSuspicious.length === 0) strengths.push("Did not click any malicious link.");
     if (openedMalicious.length === 0) strengths.push("Did not open any malicious attachment.");
+    if (data.mfa_completed) strengths.push("Enabled Multi-Factor Authentication — strong security hygiene.");
+    if (data.auto_submitted) weaknesses.push("Training was auto-submitted when the timer expired — try to pace yourself within the hour.");
+    if (!data.mfa_completed) weaknesses.push("Did not enable Multi-Factor Authentication when IT requested it.");
 
     if (missedEmails.length > 0)
       weaknesses.push(`Missed ${missedEmails.length} phishing / suspicious email${missedEmails.length === 1 ? "" : "s"} — review the missed indicators.`);
