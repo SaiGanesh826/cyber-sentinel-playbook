@@ -799,8 +799,9 @@ function ConfirmDialog({
         </div>
         <h3 className="mt-4 text-lg font-semibold">Submit your investigation?</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          You are about to submit your investigation. After submission, your responses{" "}
-          <b className="text-foreground">cannot be modified</b>.
+          You are about to submit your investigation. After submission, your responses
+          will be <b className="text-foreground">locked and cannot be modified</b>. Are
+          you sure you want to continue?
         </p>
         <ul className="mt-4 space-y-1 rounded-md bg-muted p-3 text-sm">
           <li className="flex justify-between"><span>Emails reviewed</span><span className="mono">{reviewedCount}/{total}</span></li>
