@@ -58,21 +58,15 @@ function AuthedShell() {
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-surface lg:block">
-        <div className="flex h-20 items-center gap-3 px-5 border-b border-border">
-          <NipunLogo className="h-9 w-auto" />
-          <div className="leading-tight border-l border-border pl-3">
-            <div className="text-xs font-semibold">Cyber Awareness</div>
-            <div className="mono text-[10px] text-muted-foreground">
-              {isStaff ? "Admin console" : "Employee portal"}
-            </div>
-          </div>
+        <div className="flex h-24 items-center justify-center px-5 border-b border-border">
+          <NipunLogo className="h-14 w-auto" />
         </div>
         <nav className="flex flex-col gap-1 p-3 text-sm">
           <NavItem to="/dashboard" active={path === "/dashboard"} icon={LayoutDashboard}>
             Dashboard
           </NavItem>
           <NavItem to="/training/phishing-inbox" active={path.startsWith("/training")} icon={GraduationCap}>
-            Phishing training
+            Training
           </NavItem>
           <NavItem to="/leaderboard" active={path.startsWith("/leaderboard")} icon={Trophy}>
             Leaderboard
