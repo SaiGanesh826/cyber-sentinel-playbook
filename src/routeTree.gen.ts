@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
 import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin.employees'
 import { Route as AuthenticatedAdminCampaignsRouteImport } from './routes/_authenticated/admin.campaigns'
+import { Route as AuthenticatedAdminAdministratorsRouteImport } from './routes/_authenticated/admin.administrators'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -120,6 +121,12 @@ const AuthenticatedAdminCampaignsRoute =
     path: '/campaigns',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdministratorsRoute =
+  AuthenticatedAdminAdministratorsRouteImport.update({
+    id: '/administrators',
+    path: '/administrators',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/register/$token': typeof RegisterTokenRoute
+  '/admin/administrators': typeof AuthenticatedAdminAdministratorsRoute
   '/admin/campaigns': typeof AuthenticatedAdminCampaignsRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/register/$token': typeof RegisterTokenRoute
+  '/admin/administrators': typeof AuthenticatedAdminAdministratorsRoute
   '/admin/campaigns': typeof AuthenticatedAdminCampaignsRoute
   '/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -165,6 +174,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/register/$token': typeof RegisterTokenRoute
+  '/_authenticated/admin/administrators': typeof AuthenticatedAdminAdministratorsRoute
   '/_authenticated/admin/campaigns': typeof AuthenticatedAdminCampaignsRoute
   '/_authenticated/admin/employees': typeof AuthenticatedAdminEmployeesRoute
   '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leaderboard'
     | '/register/$token'
+    | '/admin/administrators'
     | '/admin/campaigns'
     | '/admin/employees'
     | '/admin/registrations'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/leaderboard'
     | '/register/$token'
+    | '/admin/administrators'
     | '/admin/campaigns'
     | '/admin/employees'
     | '/admin/registrations'
@@ -221,6 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/leaderboard'
     | '/register/$token'
+    | '/_authenticated/admin/administrators'
     | '/_authenticated/admin/campaigns'
     | '/_authenticated/admin/employees'
     | '/_authenticated/admin/registrations'
@@ -362,10 +375,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminCampaignsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/administrators': {
+      id: '/_authenticated/admin/administrators'
+      path: '/administrators'
+      fullPath: '/admin/administrators'
+      preLoaderRoute: typeof AuthenticatedAdminAdministratorsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAdministratorsRoute: typeof AuthenticatedAdminAdministratorsRoute
   AuthenticatedAdminCampaignsRoute: typeof AuthenticatedAdminCampaignsRoute
   AuthenticatedAdminEmployeesRoute: typeof AuthenticatedAdminEmployeesRoute
   AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
@@ -375,6 +396,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAdministratorsRoute: AuthenticatedAdminAdministratorsRoute,
   AuthenticatedAdminCampaignsRoute: AuthenticatedAdminCampaignsRoute,
   AuthenticatedAdminEmployeesRoute: AuthenticatedAdminEmployeesRoute,
   AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
@@ -417,13 +439,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

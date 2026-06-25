@@ -1,18 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { NipunLogo } from "@/components/brand";
+
 
 const search = z.object({ tab: z.enum(["signin", "signup"]).optional() });
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => search.parse(s),
   head: () => ({
-    meta: [{ title: "Sign in · SOC Defender" }],
+    meta: [{ title: "Sign in · Nipun Cybersecurity Awareness" }],
   }),
+
   component: AuthPage,
 });
 
@@ -23,12 +25,13 @@ function AuthPage() {
     <div className="relative isolate flex min-h-screen items-center justify-center px-4">
       <div className="absolute inset-0 soc-grid opacity-30" />
       <div className="relative z-10 w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight">SOC Defender</span>
+        <Link to="/" className="mb-6 flex items-center justify-center gap-3">
+          <NipunLogo className="h-12 w-auto" />
         </Link>
+        <h1 className="mb-4 text-center text-sm font-medium text-muted-foreground">
+          Cybersecurity Awareness Training
+        </h1>
+
 
         <div className="soc-card p-6">
           <div className="mb-5 inline-flex rounded-md border border-border p-1">

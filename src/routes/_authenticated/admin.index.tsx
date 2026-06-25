@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import {
   Users,
   ClipboardCheck,
@@ -8,13 +9,17 @@ import {
   FileWarning,
   BarChart3,
   Activity,
+  ShieldCheck,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminOverview,
 });
 
 function AdminOverview() {
+  const { roles } = useAuth();
+  const isSuper = roles.includes("super_admin");
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
@@ -37,12 +42,13 @@ function AdminOverview() {
     },
   });
 
+
   return (
     <div className="px-6 py-10 lg:px-10">
       <span className="chip">ADMIN · OVERVIEW</span>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        SOC operations center
-      </h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Admin console</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Operations overview for Nipun Cybersecurity Awareness.</p>
+
 
       <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -85,6 +91,15 @@ function AdminOverview() {
           body="Author, edit, and toggle the email scenarios employees train on."
           icon={FileWarning}
         />
+        {isSuper && (
+          <AdminCard
+            to="/admin/administrators"
+            title="Administrator management"
+            body="Create, promote, demote, and remove administrators. Super Admin only."
+            icon={ShieldCheck}
+          />
+        )}
+
         <AdminCard
           to="/admin/reports"
           title="Reports & analytics"
