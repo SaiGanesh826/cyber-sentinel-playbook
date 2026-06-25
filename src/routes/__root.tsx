@@ -77,18 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SOC Defender — Cybersecurity Awareness Training" },
+      { title: "Nipun — Cybersecurity Awareness Training" },
       {
         name: "description",
         content:
-          "Enterprise cybersecurity awareness training built around realistic phishing investigations and an analyst-style SOC workflow.",
+          "Nipun internal cybersecurity awareness platform. Realistic phishing investigations in a virtual office environment.",
       },
-      { name: "author", content: "SOC Defender" },
-      { property: "og:title", content: "SOC Defender" },
+      { name: "author", content: "Nipun" },
+      { property: "og:title", content: "Nipun — Cybersecurity Awareness" },
       {
         property: "og:description",
         content:
-          "Realistic phishing simulations, hidden scoring, and post-investigation learning for the whole organization.",
+          "Realistic phishing investigations, hidden scoring, and personalized learning reports for the workforce.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -115,7 +115,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
@@ -127,14 +127,16 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
-        <Toaster richColors theme="dark" position="top-right" />
+        <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
