@@ -258,15 +258,25 @@ function MailClient({
       <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-2 text-primary-foreground">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Mail className="h-4 w-4" />
-          Nipun Corporate Mail
+          Nipun Corporate Mail — Inbox
         </div>
-        <button
-          onClick={onClose}
-          className="rounded p-1 hover:bg-white/20"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setConfirmSubmit(true)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-foreground shadow hover:opacity-90"
+            title="Submit your investigation"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Submit Training
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded p-1 hover:bg-white/20"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="grid flex-1 overflow-hidden md:grid-cols-[200px_320px_1fr]">
