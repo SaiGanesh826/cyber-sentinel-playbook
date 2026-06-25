@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import {
   Users,
   ClipboardCheck,
@@ -8,14 +9,18 @@ import {
   FileWarning,
   BarChart3,
   Activity,
+  ShieldCheck,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminOverview,
 });
 
 function AdminOverview() {
-  const { data: stats } = useQuery({
+  const { roles } = useAuth();
+  const isSuper = roles.includes("super_admin");
+
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const [pending, employees, sessions, scores] = await Promise.all([
