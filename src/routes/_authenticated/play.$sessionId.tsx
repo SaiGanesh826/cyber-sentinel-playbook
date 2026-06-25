@@ -282,15 +282,11 @@ function MailClient({
       <div className="grid flex-1 overflow-hidden md:grid-cols-[200px_320px_1fr]">
         {/* Folder nav */}
         <nav className="hidden border-r border-border bg-muted/50 p-3 text-sm md:block">
-          <button
-            onClick={() => setConfirmSubmit(true)}
-            className="mb-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground hover:opacity-90"
-          >
-            <Send className="h-3.5 w-3.5" />
-            Submit Training
-          </button>
           <FolderItem icon={Inbox} active={folder === "inbox"} onClick={() => setFolder("inbox")}>
             Inbox <span className="ml-auto chip">{emails.length}</span>
+          </FolderItem>
+          <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
+            Starred
           </FolderItem>
           <FolderItem icon={Star} active={false} onClick={() => toast("Starred is empty.")}>
             Starred
