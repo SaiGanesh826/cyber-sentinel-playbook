@@ -321,23 +321,28 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
       .update({ submitted_at: submitted_at.toISOString(), status: "submitted" })
       .eq("id", session.id);
 
-    // persist each individual incident report
-    for (const r of data.reports) {
+    // Aggregate all per-email reports into one incident_reports row
+    // (session_id is UNIQUE on incident_reports).
+    if (data.reports.length > 0) {
+      const allRedFlags = Array.from(new Set(data.reports.flatMap((r) => r.red_flags)));
+      const allUrls = Array.from(new Set(data.reports.flatMap((r) => r.suspicious_links)));
+      // Pick the most severe classification we received
+      const order: any = { phishing: 4, suspicious: 3, spam: 2, legitimate: 1 };
+      const worst = data.reports.reduce(
+        (acc, r) => (order[r.classification] > order[acc] ? r.classification : acc),
+        "legitimate" as string,
+      );
       await supabaseAdmin.from("incident_reports").insert({
         session_id: session.id,
-        classification: r.classification === "suspicious" ? "phishing" : r.classification,
-        red_flags: r.red_flags,
-        suspicious_urls: r.suspicious_links,
-        recommended_action:
-          r.recommended_action === "report_to_security"
-            ? "report_to_soc"
-            : r.recommended_action === "ignore"
-              ? "delete"
-              : r.recommended_action,
-        summary: r.summary,
-        notes: JSON.stringify({ email_id: r.email_id, incident_type: r.incident_type, risk_level: r.risk_level }),
+        classification: worst === "suspicious" ? "phishing" : worst,
+        red_flags: allRedFlags,
+        suspicious_urls: allUrls,
+        recommended_action: "report_to_soc",
+        summary: `${data.reports.length} email(s) reported`,
+        notes: JSON.stringify({ reports: data.reports }),
       });
     }
+
 
     const { data: score, error: scoreErr } = await supabaseAdmin
       .from("scores")
