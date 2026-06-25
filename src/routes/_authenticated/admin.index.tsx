@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 function AdminOverview() {
   const { roles } = useAuth();
   const isSuper = roles.includes("super_admin");
-
+  const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
       const [pending, employees, sessions, scores] = await Promise.all([
@@ -42,9 +42,13 @@ function AdminOverview() {
     },
   });
 
+
   return (
     <div className="px-6 py-10 lg:px-10">
       <span className="chip">ADMIN · OVERVIEW</span>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Admin console</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Operations overview for Nipun Cybersecurity Awareness.</p>
+
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">
         SOC operations center
       </h1>
