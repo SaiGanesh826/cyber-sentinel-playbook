@@ -316,6 +316,8 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
         missed_count: missedEmails.length,
         clicked_suspicious_links: clickedSuspicious,
         opened_malicious_attachments: openedMalicious,
+        mfa_completed: data.mfa_completed,
+        auto_submitted: data.auto_submitted,
       },
       correct_reported: correctReported,
       incorrect_reported: incorrectReported,
