@@ -120,14 +120,16 @@ function AuthedShell() {
                 Sign out
               </button>
             </div>
+            <div className="mono mt-2 border-t border-border pt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isStaff ? "Admin console" : "Employee portal"}
+            </div>
           </div>
         </div>
       </aside>
 
-      <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-surface px-4">
+      <header className="lg:hidden sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <NipunLogo className="h-7 w-auto" />
-          <span className="text-sm font-semibold">Cyber Awareness</span>
+          <NipunLogo className="h-10 w-auto" />
         </Link>
         <button onClick={signOut} className="text-xs text-muted-foreground hover:text-foreground">
           Sign out
