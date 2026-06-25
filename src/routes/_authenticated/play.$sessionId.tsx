@@ -714,7 +714,10 @@ function ReportForm({
                       checked={!!urls[l.href]}
                       onChange={(e) => setUrls((m) => ({ ...m, [l.href]: e.target.checked }))}
                     />
-                    <span className="mono break-all">{l.href}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-foreground">"{l.text}"</span>
+                      <span className="mono mt-0.5 block break-all text-muted-foreground">→ {l.href}</span>
+                    </span>
                   </label>
                 ))}
               </div>
