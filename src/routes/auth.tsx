@@ -26,7 +26,7 @@ function AuthPage() {
       <div className="absolute inset-0 soc-grid opacity-30" />
       <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-3">
-          <NipunLogo className="h-12 w-auto" />
+          <NipunLogo className="h-20 w-auto" />
         </Link>
         <h1 className="mb-4 text-center text-sm font-medium text-muted-foreground">
           Cybersecurity Awareness Training

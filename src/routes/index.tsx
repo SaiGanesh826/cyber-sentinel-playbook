@@ -28,12 +28,8 @@ function Landing() {
     <div className="relative isolate min-h-screen overflow-hidden">
       <div className="absolute inset-0 soc-grid opacity-30 pointer-events-none" />
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link to="/" className="flex items-center gap-3">
-          <NipunLogo className="h-10 w-auto" />
-          <div className="leading-tight border-l border-border pl-3">
-            <div className="font-semibold tracking-tight text-sm">Cybersecurity Awareness</div>
-            <div className="mono text-[10px] text-muted-foreground">Internal training platform</div>
-          </div>
+        <Link to="/" className="flex items-center" aria-label="Nipun home">
+          <NipunLogo className="h-14 w-auto" />
         </Link>
         <nav className="flex items-center gap-3">
           <Link
@@ -92,17 +88,10 @@ function Landing() {
                 inbox · employee@nipun.com
               </span>
             </div>
-            <div className="rounded-md bg-muted p-5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="mono">From: hr-payroll@nlpun-support.com</span>
-                <span className="chip chip-warn">SUSPICIOUS</span>
-              </div>
-              <h3 className="mt-3 text-lg font-semibold">
-                URGENT: Verify your payroll details by today 5PM
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Dear Employee, our records show your direct-deposit information is
-                out of date. Please verify your account within 4 hours…
+            <div className="flex flex-col items-center justify-center rounded-md bg-muted px-5 py-12">
+              <NipunLogo className="h-32 w-auto" />
+              <p className="mono mt-6 text-center text-xs text-muted-foreground">
+                Nipun · Internal Cybersecurity Awareness
               </p>
             </div>
           </div>

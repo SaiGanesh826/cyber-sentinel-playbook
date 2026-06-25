@@ -58,21 +58,15 @@ function AuthedShell() {
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-border bg-surface lg:block">
-        <div className="flex h-20 items-center gap-3 px-5 border-b border-border">
-          <NipunLogo className="h-9 w-auto" />
-          <div className="leading-tight border-l border-border pl-3">
-            <div className="text-xs font-semibold">Cyber Awareness</div>
-            <div className="mono text-[10px] text-muted-foreground">
-              {isStaff ? "Admin console" : "Employee portal"}
-            </div>
-          </div>
+        <div className="flex h-24 items-center justify-center px-5 border-b border-border">
+          <NipunLogo className="h-14 w-auto" />
         </div>
         <nav className="flex flex-col gap-1 p-3 text-sm">
           <NavItem to="/dashboard" active={path === "/dashboard"} icon={LayoutDashboard}>
             Dashboard
           </NavItem>
           <NavItem to="/training/phishing-inbox" active={path.startsWith("/training")} icon={GraduationCap}>
-            Phishing training
+            Training
           </NavItem>
           <NavItem to="/leaderboard" active={path.startsWith("/leaderboard")} icon={Trophy}>
             Leaderboard
@@ -126,14 +120,16 @@ function AuthedShell() {
                 Sign out
               </button>
             </div>
+            <div className="mono mt-2 border-t border-border pt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {isStaff ? "Admin console" : "Employee portal"}
+            </div>
           </div>
         </div>
       </aside>
 
-      <header className="lg:hidden sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-surface px-4">
+      <header className="lg:hidden sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-surface px-4">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <NipunLogo className="h-7 w-auto" />
-          <span className="text-sm font-semibold">Cyber Awareness</span>
+          <NipunLogo className="h-10 w-auto" />
         </Link>
         <button onClick={signOut} className="text-xs text-muted-foreground hover:text-foreground">
           Sign out

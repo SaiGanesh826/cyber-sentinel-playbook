@@ -84,8 +84,8 @@ function VirtualOffice() {
       <div className="relative z-10 flex h-full flex-col">
         {/* Desktop icons */}
         <div className="flex-1 p-6">
-          <div className="absolute right-6 top-6 flex items-center gap-3 rounded-md bg-black/30 px-3 py-1.5 text-xs backdrop-blur">
-            <NipunLogo className="h-6 w-auto" />
+          <div className="absolute right-6 top-6 flex items-center gap-3 rounded-md bg-white/95 px-3 py-2 text-xs text-foreground shadow-lg backdrop-blur">
+            <NipunLogo className="h-10 w-auto" />
             <span className="opacity-80">Workstation · employee@nipun.com</span>
           </div>
           <div className="grid w-fit grid-cols-1 gap-6 sm:grid-cols-2">
@@ -267,7 +267,7 @@ function MailClient({
             title="Submit your investigation"
           >
             <Send className="h-3.5 w-3.5" />
-            Submit Training
+            Submit Investigation
           </button>
           <button
             onClick={onClose}
@@ -408,15 +408,6 @@ function MailClient({
         </div>
       )}
 
-      {/* Floating Submit Training button (always visible) */}
-      <button
-        onClick={() => setConfirmSubmit(true)}
-        className="absolute bottom-5 right-5 z-20 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-2xl ring-2 ring-white/30 hover:opacity-90"
-        title="Submit your investigation"
-      >
-        <Send className="h-4 w-4" />
-        Submit Training
-      </button>
 
       {reportingId && (
         <ReportForm
