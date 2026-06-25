@@ -529,8 +529,6 @@ function ReadingPane({
         }}
         dangerouslySetInnerHTML={{ __html: email.body_html }}
       />
-      {/* eslint-disable-next-line @typescript-eslint/no-unused-expressions */}
-      {void status}
       {email.attachments.length > 0 && (
         <div className="border-t border-border p-4">
           <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
