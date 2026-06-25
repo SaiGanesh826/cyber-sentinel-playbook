@@ -384,8 +384,9 @@ function MailClient({
               onClickLink={(href) => {
                 setClickedLinks((c) => (c.includes(href) ? c : [...c, href]));
                 record("click_link", href);
-                toast.warning("Link click recorded — link not opened in training.");
+                toast.warning(`Link click recorded — destination was ${href}. The link was not opened.`);
               }}
+              onHoverLink={setHoverUrl}
               onOpenAttachment={(name) => {
                 setOpenedAttachments((a) => (a.includes(name) ? a : [...a, name]));
                 record("open_attachment", name);
@@ -399,6 +400,23 @@ function MailClient({
           )}
         </div>
       </div>
+
+      {/* Browser-style hover URL status bar */}
+      {hoverUrl && (
+        <div className="pointer-events-none absolute bottom-0 left-0 z-20 max-w-[70%] truncate rounded-tr-md border-r border-t border-border bg-surface px-3 py-1.5 mono text-[11px] text-foreground shadow">
+          {hoverUrl}
+        </div>
+      )}
+
+      {/* Floating Submit Training button (always visible) */}
+      <button
+        onClick={() => setConfirmSubmit(true)}
+        className="absolute bottom-5 right-5 z-20 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-2xl ring-2 ring-white/30 hover:opacity-90"
+        title="Submit your investigation"
+      >
+        <Send className="h-4 w-4" />
+        Submit Training
+      </button>
 
       {reportingId && (
         <ReportForm
