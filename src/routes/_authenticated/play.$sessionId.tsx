@@ -523,10 +523,7 @@ function ReadingPane({
           const a = closestAnchor(ev.target as HTMLElement);
           if (a) onHoverLink(a.getAttribute("href") || a.href);
         }}
-        onMouseOut={(ev) => {
-          const a = closestAnchor(ev.target as HTMLElement);
-          if (a) onHoverLink(null);
-        }}
+        onMouseOut={() => onHoverLink(null)}
         dangerouslySetInnerHTML={{ __html: email.body_html }}
       />
       {email.attachments.length > 0 && (
