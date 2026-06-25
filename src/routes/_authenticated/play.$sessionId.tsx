@@ -199,6 +199,7 @@ function MailClient({
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hoverUrl, setHoverUrl] = useState<string | null>(null);
 
   function record(action_type: string, target?: string, meta?: any) {
     log({ data: { session_id: sessionId, action_type, target, meta } }).catch(() => {});
