@@ -511,7 +511,7 @@ function ReadingPane({
         <div className="mt-2 mono text-xs text-muted-foreground">To: {email.to}</div>
       </header>
       <div
-        className="prose prose-sm max-w-none flex-1 overflow-y-auto p-6 text-sm leading-relaxed"
+        className="not-prose max-w-none flex-1 overflow-y-auto bg-white p-6 text-sm leading-relaxed text-[#202124]"
         onClickCapture={(ev) => {
           const a = closestAnchor(ev.target as HTMLElement);
           if (a) {
