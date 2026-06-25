@@ -236,8 +236,11 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
     const openedMalicious = data.opened_attachment_names.filter((n) =>
       INBOX_EMAILS.some((e) => e.attachments.some((a) => a.suspicious && a.name === n)),
     );
-    totalPoints -= clickedSuspicious.length * 4;
-    totalPoints -= openedMalicious.length * 4;
+    totalPoints -= clickedSuspicious.length * 50; // Phishing simulation: -50 per malicious click
+    totalPoints -= openedMalicious.length * 50;
+
+    // MFA bonus — enabling MFA is a positive security behavior
+    if (data.mfa_completed) totalPoints += 10;
 
     // normalize to /100
     const rawMax = maxPoints;
