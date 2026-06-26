@@ -8,7 +8,7 @@ import {
   KeyRound,
   Globe,
   Users,
-  DatabaseLock,
+  Database,
   Smartphone,
   Building2,
   Lock,
