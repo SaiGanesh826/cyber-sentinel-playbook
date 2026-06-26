@@ -2,13 +2,92 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { ShieldCheck, Inbox, ArrowRight, Trophy, Target } from "lucide-react";
+import {
+  ShieldCheck,
+  ArrowRight,
+  KeyRound,
+  Globe,
+  Users,
+  DatabaseLock,
+  Smartphone,
+  Building2,
+  Lock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  component: Dashboard,
+  component: TrainingPage,
 });
 
-function Dashboard() {
+type Module = {
+  slug: string;
+  title: string;
+  description: string;
+  duration: string;
+  status: "available" | "coming_soon";
+  icon: any;
+};
+
+const MODULES: Module[] = [
+  {
+    slug: "phishing-awareness",
+    title: "Phishing Awareness Training",
+    description:
+      "Investigate a realistic business inbox and identify legitimate vs. suspicious emails the way a SOC analyst would.",
+    duration: "≈ 45 min",
+    status: "available",
+    icon: ShieldCheck,
+  },
+  {
+    slug: "password-security",
+    title: "Password Security",
+    description: "Build strong credential hygiene, password managers, and recovery workflows.",
+    duration: "≈ 20 min",
+    status: "coming_soon",
+    icon: KeyRound,
+  },
+  {
+    slug: "safe-internet-browsing",
+    title: "Safe Internet Browsing",
+    description: "Recognise unsafe websites, browser warnings, and common drive-by traps.",
+    duration: "≈ 20 min",
+    status: "coming_soon",
+    icon: Globe,
+  },
+  {
+    slug: "social-engineering",
+    title: "Social Engineering",
+    description: "Defend against pretexting, vishing, smishing, and impersonation attempts.",
+    duration: "≈ 25 min",
+    status: "coming_soon",
+    icon: Users,
+  },
+  {
+    slug: "data-protection",
+    title: "Data Protection",
+    description: "Classify, handle, and share sensitive information without leaks.",
+    duration: "≈ 25 min",
+    status: "coming_soon",
+    icon: DatabaseLock,
+  },
+  {
+    slug: "mobile-security",
+    title: "Mobile Security",
+    description: "Lock down phones and tablets that access company data.",
+    duration: "≈ 20 min",
+    status: "coming_soon",
+    icon: Smartphone,
+  },
+  {
+    slug: "physical-security",
+    title: "Physical Security",
+    description: "Badges, tailgating, clean desks, and other on-site risks.",
+    duration: "≈ 15 min",
+    status: "coming_soon",
+    icon: Building2,
+  },
+];
+
+function TrainingPage() {
   const { profile, roles } = useAuth();
   const isStaff = roles.some((r) => ["super_admin", "admin", "manager"].includes(r));
 
@@ -30,12 +109,12 @@ function Dashboard() {
     <div className="px-6 py-8 lg:px-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="chip">CYBERSECURITY · DASHBOARD</span>
+          <span className="chip">CYBERSECURITY · AWARENESS TRAINING</span>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             Welcome back, {profile?.full_name?.split(" ")[0] || "Employee"}.
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Launch a cybersecurity training session whenever you're ready.
+            Choose an awareness module below. New modules will appear here as they are released.
           </p>
         </div>
         {isStaff && (
@@ -48,49 +127,19 @@ function Dashboard() {
         )}
       </div>
 
-      <section className="mt-8 grid gap-3 sm:grid-cols-3">
-        <KPI icon={Inbox} label="Sessions completed" value={String(myScores?.length ?? 0)} />
-        <KPI icon={Trophy} label="Last score" value={myScores?.[0] ? `${myScores[0].total}/100` : "—"} />
-        <KPI
-          icon={Target}
-          label="Average accuracy"
-          value={
-            myScores && myScores.length > 0
-              ? `${Math.round(myScores.reduce((a, s) => a + Number(s.accuracy ?? 0), 0) / myScores.length)}%`
-              : "—"
-          }
-        />
-      </section>
+      <h2 className="mt-10 text-lg font-semibold">Awareness modules</h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {MODULES.map((mod) => (
+          <ModuleCard key={mod.slug} module={mod} />
+        ))}
+      </div>
 
-      <h2 className="mt-12 text-lg font-semibold">Available training</h2>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="soc-card flex flex-col p-6">
-          <div className="flex items-start justify-between">
-            <div className="grid h-12 w-12 place-items-center rounded-md bg-primary/10 text-primary">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <span className="chip chip-success">ACTIVE</span>
-          </div>
-          <h3 className="mt-4 text-lg font-semibold">Training</h3>
-          <p className="mt-1 flex-1 text-sm text-muted-foreground">
-            Enter the virtual office, investigate the 10 messages in your inbox, and submit
-            your investigation. You'll receive a personalized learning report. More
-            cybersecurity training modules will be added to this section soon.
-          </p>
-          <Link
-            to="/training/$slug"
-            params={{ slug: "phishing-inbox" }}
-            className="mt-4 inline-flex items-center gap-2 self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            Launch training <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        {myScores && myScores.length > 0 && (
-          <div className="soc-card p-6">
-            <h3 className="text-lg font-semibold">Recent sessions</h3>
-            <ul className="mt-3 divide-y divide-border text-sm">
-              {myScores.slice(0, 5).map((s) => (
+      {myScores && myScores.length > 0 && (
+        <>
+          <h2 className="mt-12 text-lg font-semibold">Recent attempts</h2>
+          <div className="soc-card mt-3 p-6">
+            <ul className="divide-y divide-border text-sm">
+              {myScores.map((s) => (
                 <li key={s.session_id} className="flex items-center justify-between py-2">
                   <div>
                     <div className="font-medium">{new Date(s.created_at).toLocaleString()}</div>
@@ -107,22 +156,52 @@ function Dashboard() {
               ))}
             </ul>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
 
-function KPI({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function ModuleCard({ module: mod }: { module: Module }) {
+  const Icon = mod.icon;
+  const available = mod.status === "available";
   return (
-    <div className="soc-card flex items-center gap-4 p-5">
-      <div className="grid h-10 w-10 place-items-center rounded-md bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
+    <div className="soc-card flex flex-col p-6">
+      <div className="flex items-start justify-between">
+        <div
+          className={`grid h-12 w-12 place-items-center rounded-md ${
+            available ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <Icon className="h-6 w-6" />
+        </div>
+        {available ? (
+          <span className="chip chip-success">AVAILABLE</span>
+        ) : (
+          <span className="chip">COMING SOON</span>
+        )}
       </div>
-      <div>
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="mt-0.5 text-2xl font-semibold mono">{value}</div>
+      <h3 className="mt-4 text-base font-semibold leading-snug">{mod.title}</h3>
+      <p className="mt-1 flex-1 text-sm text-muted-foreground">{mod.description}</p>
+      <div className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">
+        Duration · {mod.duration}
       </div>
+      {available ? (
+        <Link
+          to="/training/$slug"
+          params={{ slug: mod.slug }}
+          className="mt-4 inline-flex items-center gap-2 self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+        >
+          Take Assessment <ArrowRight className="h-4 w-4" />
+        </Link>
+      ) : (
+        <button
+          disabled
+          className="mt-4 inline-flex items-center gap-2 self-start rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground"
+        >
+          <Lock className="h-3.5 w-3.5" /> Coming soon
+        </button>
+      )}
     </div>
   );
 }
