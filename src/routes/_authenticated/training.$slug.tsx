@@ -1,91 +1,108 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { startInboxSession } from "@/lib/inbox.functions";
-import { useState } from "react";
-import { toast } from "sonner";
-import { ShieldAlert, ArrowRight, Inbox, Target, Flag, FileSearch, ArrowLeft } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Target,
+  ListChecks,
+  Clock,
+  Mail,
+  Flag,
+  Trophy,
+  ShieldCheck,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/training/$slug")({
-  component: MissionBriefing,
+  component: ModuleOverview,
 });
 
-function MissionBriefing() {
-  const navigate = useNavigate();
-  const start = useServerFn(startInboxSession);
-  const [launching, setLaunching] = useState(false);
+function ModuleOverview() {
+  const { slug } = Route.useParams();
 
-  async function launch() {
-    setLaunching(true);
-    try {
-      const res = await start();
-      navigate({ to: "/play/$sessionId", params: { sessionId: res.session_id } });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Unable to start session");
-      setLaunching(false);
-    }
-  }
-
+  // Only phishing-awareness is active; any other slug falls back to the same view.
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
+    <div className="mx-auto max-w-3xl px-6 py-10">
       <Link to="/dashboard" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3 w-3" /> Back to dashboard
+        <ArrowLeft className="h-3 w-3" /> Back to training
       </Link>
-      <span className="chip mt-4">MISSION BRIEFING</span>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        Training — Inbox Investigation
-      </h1>
-      <p className="mt-3 text-muted-foreground">
-        You are about to enter a virtual workstation. Treat this exactly like a normal
-        workday at Nipun.
+
+      <span className="chip mt-4">MODULE OVERVIEW</span>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Phishing Awareness Training</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Review the objectives, rules, and scoring before you start the assessment.
       </p>
 
-      <div className="soc-card mt-8 p-6">
-        <div className="flex items-start gap-3">
-          <ShieldAlert className="mt-0.5 h-5 w-5 text-accent" />
-          <div className="space-y-3 text-sm">
-            <p className="font-medium text-foreground">
-              You are working as an employee in the organization.
-            </p>
-            <ul className="list-disc space-y-2 pl-5 text-muted-foreground">
-              <li>Review your inbox carefully — your inbox is waiting.</li>
-              <li>Investigate emails exactly as you would during your daily work.</li>
-              <li>
-                If you believe an email is suspicious or phishing, click{" "}
-                <b className="text-foreground">Report to Security</b> and complete the
-                incident investigation form.
-              </li>
-              <li>
-                If you believe an email is legitimate, simply close it and move on — no
-                action required.
-              </li>
-              <li>You may open emails in any order and revisit them as often as you like.</li>
-              <li>
-                <b className="text-foreground">No hints will be provided</b>, and the
-                platform will not tell you whether your decisions are correct.
-              </li>
-              <li>
-                Your investigation will be evaluated only after you click{" "}
-                <b className="text-foreground">Submit Investigation</b>.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <Section icon={Target} title="Module objective">
+        Evaluate your ability to recognise legitimate and suspicious business emails, identify
+        phishing indicators, and choose the safest response inside a realistic corporate inbox.
+      </Section>
+
+      <Section icon={ListChecks} title="Assessment instructions">
+        <p>During this assessment you should:</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>Review a realistic business inbox.</li>
+          <li>Examine the sender's email address.</li>
+          <li>Check the subject line.</li>
+          <li>Read the email content carefully.</li>
+          <li>Inspect hyperlinks and attachments.</li>
+          <li>Identify phishing indicators (red flags).</li>
+          <li>Decide whether the email is <b>Legitimate</b> or <b>Suspicious</b>.</li>
+          <li>Select the most appropriate action: <b>Open</b>, <b>Verify</b>, <b>Report</b>, or <b>Ignore / Delete</b>.</li>
+          <li>Complete the assessment within the allotted time.</li>
+        </ul>
+      </Section>
+
+      <Section icon={ShieldCheck} title="Rules">
+        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>No hints will be provided — the platform will not tell you whether your decisions are correct.</li>
+          <li>You may open emails in any order and revisit them as often as you like.</li>
+          <li>Clicking a suspicious link in a phishing email reduces your score and is recorded.</li>
+          <li>Your work is evaluated only after you click <b>Submit Investigation</b>.</li>
+        </ul>
+      </Section>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Stat icon={Inbox} title="Inbox tasks" body="Mix of legitimate, suspicious, and phishing." />
-        <Stat icon={FileSearch} title="Free-form" body="Open any email in any order, as many times as you need." />
-        <Stat icon={Flag} title="Report only what's bad" body="Don't report safe emails — that's a false alarm." />
+        <Stat icon={Clock} title="Time limit" body="60 minutes" />
+        <Stat icon={Mail} title="Emails" body="Mix of legitimate and suspicious, randomised per attempt" />
+        <Stat icon={Flag} title="Identify" body="Phishing indicators, classification, and correct action" />
       </div>
 
-      <button
-        disabled={launching}
-        onClick={launch}
-        className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+      <Section icon={Trophy} title="Scoring information">
+        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>Correctly classifying each email earns points.</li>
+          <li>Correctly identifying red flags earns bonus points.</li>
+          <li>False alarms (reporting legitimate emails) reduce your score.</li>
+          <li>Clicking on suspicious links applies a penalty.</li>
+          <li>Completing legitimate security actions (such as MFA enrolment) earns bonus points.</li>
+        </ul>
+      </Section>
+
+      <Link
+        to="/training/$slug/start"
+        params={{ slug }}
+        className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90"
       >
-        {launching ? "Booting workstation…" : "Enter virtual office"}
-        <ArrowRight className="h-4 w-4" />
-      </button>
+        Start Assessment <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
+function Section({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: any;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="soc-card mt-6 p-6">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" />
+        <h2 className="text-sm font-semibold uppercase tracking-wider">{title}</h2>
+      </div>
+      <div className="mt-3 text-sm text-foreground/90">{children}</div>
     </div>
   );
 }
@@ -99,6 +116,3 @@ function Stat({ icon: Icon, title, body }: { icon: any; title: string; body: str
     </div>
   );
 }
-
-// Suppress unused param warning
-void Target;

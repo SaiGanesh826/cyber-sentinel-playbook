@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin.employees'
 import { Route as AuthenticatedAdminCampaignsRouteImport } from './routes/_authenticated/admin.campaigns'
 import { Route as AuthenticatedAdminAdministratorsRouteImport } from './routes/_authenticated/admin.administrators'
+import { Route as AuthenticatedTrainingSlugStartRouteImport } from './routes/_authenticated/training.$slug.start'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -127,6 +128,12 @@ const AuthenticatedAdminAdministratorsRoute =
     path: '/administrators',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedTrainingSlugStartRoute =
+  AuthenticatedTrainingSlugStartRouteImport.update({
+    id: '/start',
+    path: '/start',
+    getParentRoute: () => AuthenticatedTrainingSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -143,9 +150,10 @@ export interface FileRoutesByFullPath {
   '/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
   '/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
-  '/training/$slug': typeof AuthenticatedTrainingSlugRoute
+  '/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/training/$slug/start': typeof AuthenticatedTrainingSlugStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -161,9 +169,10 @@ export interface FileRoutesByTo {
   '/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
   '/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
-  '/training/$slug': typeof AuthenticatedTrainingSlugRoute
+  '/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/training/$slug/start': typeof AuthenticatedTrainingSlugStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -182,9 +191,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
   '/_authenticated/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
-  '/_authenticated/training/$slug': typeof AuthenticatedTrainingSlugRoute
+  '/_authenticated/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/training/$slug/start': typeof AuthenticatedTrainingSlugStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/training/$slug'
     | '/api/scenario/$sessionId'
     | '/admin/'
+    | '/training/$slug/start'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/training/$slug'
     | '/api/scenario/$sessionId'
     | '/admin'
+    | '/training/$slug/start'
   id:
     | '__root__'
     | '/'
@@ -244,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/training/$slug'
     | '/api/scenario/$sessionId'
     | '/_authenticated/admin/'
+    | '/_authenticated/training/$slug/start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdministratorsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/training/$slug/start': {
+      id: '/_authenticated/training/$slug/start'
+      path: '/start'
+      fullPath: '/training/$slug/start'
+      preLoaderRoute: typeof AuthenticatedTrainingSlugStartRouteImport
+      parentRoute: typeof AuthenticatedTrainingSlugRoute
+    }
   }
 }
 
@@ -408,13 +428,27 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedTrainingSlugRouteChildren {
+  AuthenticatedTrainingSlugStartRoute: typeof AuthenticatedTrainingSlugStartRoute
+}
+
+const AuthenticatedTrainingSlugRouteChildren: AuthenticatedTrainingSlugRouteChildren =
+  {
+    AuthenticatedTrainingSlugStartRoute: AuthenticatedTrainingSlugStartRoute,
+  }
+
+const AuthenticatedTrainingSlugRouteWithChildren =
+  AuthenticatedTrainingSlugRoute._addFileChildren(
+    AuthenticatedTrainingSlugRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedPlaySessionIdRoute: typeof AuthenticatedPlaySessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
-  AuthenticatedTrainingSlugRoute: typeof AuthenticatedTrainingSlugRoute
+  AuthenticatedTrainingSlugRoute: typeof AuthenticatedTrainingSlugRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -423,7 +457,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedPlaySessionIdRoute: AuthenticatedPlaySessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
-  AuthenticatedTrainingSlugRoute: AuthenticatedTrainingSlugRoute,
+  AuthenticatedTrainingSlugRoute: AuthenticatedTrainingSlugRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -439,13 +473,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

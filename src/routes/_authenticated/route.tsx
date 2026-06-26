@@ -65,7 +65,7 @@ function AuthedShell() {
           <NavItem to="/dashboard" active={path === "/dashboard"} icon={LayoutDashboard}>
             Dashboard
           </NavItem>
-          <NavItem to="/training/phishing-inbox" active={path.startsWith("/training")} icon={GraduationCap}>
+          <NavItem to="/training/phishing-awareness" active={path.startsWith("/training")} icon={GraduationCap}>
             Training
           </NavItem>
           <NavItem to="/leaderboard" active={path.startsWith("/leaderboard")} icon={Trophy}>

@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          id: string
+          module_id: string
+          scenario_ids: string[]
+          score: number | null
+          session_id: string | null
+          started_at: string
+          submitted_at: string | null
+          time_taken_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string
+          id?: string
+          module_id: string
+          scenario_ids?: string[]
+          score?: number | null
+          session_id?: string | null
+          started_at?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          id?: string
+          module_id?: string
+          scenario_ids?: string[]
+          score?: number | null
+          session_id?: string | null
+          started_at?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_attempts_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -52,6 +109,7 @@ export type Database = {
           game_end: string | null
           game_start: string | null
           id: string
+          is_disabled: boolean
           name: string
           registration_end: string | null
           registration_start: string | null
@@ -65,6 +123,7 @@ export type Database = {
           game_end?: string | null
           game_start?: string | null
           id?: string
+          is_disabled?: boolean
           name: string
           registration_end?: string | null
           registration_start?: string | null
@@ -78,11 +137,57 @@ export type Database = {
           game_end?: string | null
           game_start?: string | null
           id?: string
+          is_disabled?: boolean
           name?: string
           registration_end?: string | null
           registration_start?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      employee_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string | null
+          email: string
+          employee_code: string | null
+          expires_at: string | null
+          full_name: string | null
+          id: string
+          status: string
+          token: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email: string
+          employee_code?: string | null
+          expires_at?: string | null
+          full_name?: string | null
+          id?: string
+          status?: string
+          token: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string
+          employee_code?: string | null
+          expires_at?: string | null
+          full_name?: string | null
+          id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
         }
         Relationships: []
       }
@@ -180,35 +285,80 @@ export type Database = {
       }
       phishing_scenarios: {
         Row: {
+          attachments: Json
+          body_html: string | null
+          category: string | null
+          classification: string
+          correct_action: string | null
           created_at: string
           created_by: string | null
+          department: string | null
           difficulty: Database["public"]["Enums"]["scenario_difficulty"]
+          explanation: string | null
           id: string
           is_enabled: boolean
+          is_mfa: boolean
+          links: Json
           module_id: string
           payload: Json
+          red_flags: Json
+          sender_email: string | null
+          sender_name: string | null
+          status: string
+          subject: string | null
+          tags: string[]
           title: string
           updated_at: string
         }
         Insert: {
+          attachments?: Json
+          body_html?: string | null
+          category?: string | null
+          classification?: string
+          correct_action?: string | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           difficulty?: Database["public"]["Enums"]["scenario_difficulty"]
+          explanation?: string | null
           id?: string
           is_enabled?: boolean
+          is_mfa?: boolean
+          links?: Json
           module_id: string
           payload: Json
+          red_flags?: Json
+          sender_email?: string | null
+          sender_name?: string | null
+          status?: string
+          subject?: string | null
+          tags?: string[]
           title: string
           updated_at?: string
         }
         Update: {
+          attachments?: Json
+          body_html?: string | null
+          category?: string | null
+          classification?: string
+          correct_action?: string | null
           created_at?: string
           created_by?: string | null
+          department?: string | null
           difficulty?: Database["public"]["Enums"]["scenario_difficulty"]
+          explanation?: string | null
           id?: string
           is_enabled?: boolean
+          is_mfa?: boolean
+          links?: Json
           module_id?: string
           payload?: Json
+          red_flags?: Json
+          sender_email?: string | null
+          sender_name?: string | null
+          status?: string
+          subject?: string | null
+          tags?: string[]
           title?: string
           updated_at?: string
         }
@@ -374,6 +524,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "session_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_scenarios: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          response: Json | null
+          scenario_id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position: number
+          response?: Json | null
+          scenario_id: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          response?: Json | null
+          scenario_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_scenarios_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "phishing_scenarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_scenarios_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "game_sessions"
