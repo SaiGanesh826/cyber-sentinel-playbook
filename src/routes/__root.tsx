@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Nipun internal cybersecurity awareness platform. Realistic phishing investigations in a virtual office environment.",
       },
       { name: "author", content: "Nipun" },
-      { property: "og:title", content: "Nipun — Cybersecurity Awareness" },
+      { property: "og:title", content: "Nipun — Cybersecurity Awareness Training" },
       {
         property: "og:description",
         content:
@@ -92,6 +92,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Nipun — Cybersecurity Awareness Training" },
+      { name: "description", content: "SOC Defender is an enterprise cybersecurity awareness training platform that simulates realistic phishing incidents for employee education." },
+      { property: "og:description", content: "SOC Defender is an enterprise cybersecurity awareness training platform that simulates realistic phishing incidents for employee education." },
+      { name: "twitter:description", content: "SOC Defender is an enterprise cybersecurity awareness training platform that simulates realistic phishing incidents for employee education." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c0b56fb3-58e7-45be-8f1d-3ee8409e18ac/id-preview-7fc65e84--195d1944-a0e1-4d20-a389-e68a50f5e73d.lovable.app-1782452765325.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c0b56fb3-58e7-45be-8f1d-3ee8409e18ac/id-preview-7fc65e84--195d1944-a0e1-4d20-a389-e68a50f5e73d.lovable.app-1782452765325.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
