@@ -67,7 +67,7 @@ const MODULES: Module[] = [
     description: "Classify, handle, and share sensitive information without leaks.",
     duration: "≈ 25 min",
     status: "coming_soon",
-    icon: DatabaseLock,
+    icon: Database,
   },
   {
     slug: "mobile-security",
