@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,6 @@ function RegisterPage() {
   const [full_name, setFullName] = useState("");
   const [department, setDepartment] = useState("");
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [employeeCode, setEmployeeCode] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -149,7 +148,7 @@ function RegisterPage() {
                 disabled={submitting}
                 className="w-full rounded-md bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
               >
-                {submitting ? "Submitting…" : "Submit registration"}
+                {submitting ? "Submitting…" : "Register"}
               </button>
             </form>
           )}
