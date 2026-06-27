@@ -236,15 +236,30 @@ export const registerEmployee = createServerFn({ method: "POST" })
       throw new Error("This registration request was rejected");
     }
 
-    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    const { createClient } = await import("@supabase/supabase-js");
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      throw new Error("Registration service is not configured");
+    }
+    const signupClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: undefined,
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+
+    const { data: created, error: createError } = await signupClient.auth.signUp({
       email: normalizedEmail,
       password: data.password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: data.full_name.trim(),
-        department: data.department.trim(),
-        employee_code: data.employee_code.trim(),
-        campaign_id: link.campaign_id,
+      options: {
+        data: {
+          full_name: data.full_name.trim(),
+          department: data.department.trim(),
+          employee_code: data.employee_code.trim(),
+          campaign_id: link.campaign_id,
+        },
       },
     });
 
