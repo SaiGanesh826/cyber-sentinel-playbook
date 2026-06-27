@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShieldCheck } from "lucide-react";
 import { Field } from "@/routes/auth";
+import { registerEmployee } from "@/lib/soc.functions";
 
 export const Route = createFileRoute("/register/$token")({
   head: () => ({ meta: [{ title: "Register · SOC Defender" }] }),
@@ -12,7 +14,7 @@ export const Route = createFileRoute("/register/$token")({
 
 function RegisterPage() {
   const { token } = Route.useParams();
-  const navigate = useNavigate();
+  const submitRegistration = useServerFn(registerEmployee);
   const [campaign, setCampaign] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [invalid, setInvalid] = useState(false);
@@ -51,26 +53,24 @@ function RegisterPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+    try {
+      await submitRegistration({
         data: {
+          token,
           full_name,
           department,
-          username,
+          email,
           employee_code: employeeCode,
-          campaign_id: campaign?.id,
+          password,
         },
-      },
-    });
-    if (error) {
-      toast.error(error.message);
+      });
+      setDone(true);
+      toast.success("Registration request submitted");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Registration could not be submitted");
       setSubmitting(false);
       return;
     }
-    setDone(true);
     setSubmitting(false);
   }
 
@@ -135,15 +135,12 @@ function RegisterPage() {
                 <Field label="Department">
                   <input required value={department} onChange={(e) => setDepartment(e.target.value)} className="soc-input" />
                 </Field>
-                <Field label="Employee ID (optional)">
-                  <input value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} className="soc-input" />
+                <Field label="Employee ID">
+                  <input required value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} className="soc-input" />
                 </Field>
               </div>
               <Field label="Organization email">
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="soc-input" />
-              </Field>
-              <Field label="Username">
-                <input required value={username} onChange={(e) => setUsername(e.target.value)} className="soc-input" />
               </Field>
               <Field label="Password (min 8 chars)">
                 <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="soc-input" />
