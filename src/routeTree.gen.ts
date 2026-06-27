@@ -18,6 +18,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as ApiScenarioSessionIdRouteImport } from './routes/api/scenario.$sessionId'
+import { Route as AuthenticatedTrainingSlugRouteImport } from './routes/_authenticated/training.$slug'
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedPlaySessionIdRouteImport } from './routes/_authenticated/play.$sessionId'
 import { Route as AuthenticatedAdminScenariosRouteImport } from './routes/_authenticated/admin.scenarios'
@@ -74,6 +75,12 @@ const ApiScenarioSessionIdRoute = ApiScenarioSessionIdRouteImport.update({
   path: '/api/scenario/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTrainingSlugRoute =
+  AuthenticatedTrainingSlugRouteImport.update({
+    id: '/training/$slug',
+    path: '/training/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedResultsSessionIdRoute =
   AuthenticatedResultsSessionIdRouteImport.update({
     id: '/results/$sessionId',
@@ -124,15 +131,15 @@ const AuthenticatedAdminAdministratorsRoute =
   } as any)
 const AuthenticatedTrainingSlugIndexRoute =
   AuthenticatedTrainingSlugIndexRouteImport.update({
-    id: '/training/$slug/',
-    path: '/training/$slug/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTrainingSlugRoute,
   } as any)
 const AuthenticatedTrainingSlugStartRoute =
   AuthenticatedTrainingSlugStartRouteImport.update({
-    id: '/training/$slug/start',
-    path: '/training/$slug/start',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/start',
+    path: '/start',
+    getParentRoute: () => AuthenticatedTrainingSlugRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
   '/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/training/$slug/start': typeof AuthenticatedTrainingSlugStartRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
   '/_authenticated/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/_authenticated/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/training/$slug/start': typeof AuthenticatedTrainingSlugStartRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin/scenarios'
     | '/play/$sessionId'
     | '/results/$sessionId'
+    | '/training/$slug'
     | '/api/scenario/$sessionId'
     | '/admin/'
     | '/training/$slug/start'
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/scenarios'
     | '/_authenticated/play/$sessionId'
     | '/_authenticated/results/$sessionId'
+    | '/_authenticated/training/$slug'
     | '/api/scenario/$sessionId'
     | '/_authenticated/admin/'
     | '/_authenticated/training/$slug/start'
@@ -332,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiScenarioSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/training/$slug': {
+      id: '/_authenticated/training/$slug'
+      path: '/training/$slug'
+      fullPath: '/training/$slug'
+      preLoaderRoute: typeof AuthenticatedTrainingSlugRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/results/$sessionId': {
       id: '/_authenticated/results/$sessionId'
       path: '/results/$sessionId'
@@ -390,17 +408,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/training/$slug/': {
       id: '/_authenticated/training/$slug/'
-      path: '/training/$slug'
+      path: '/'
       fullPath: '/training/$slug/'
       preLoaderRoute: typeof AuthenticatedTrainingSlugIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTrainingSlugRoute
     }
     '/_authenticated/training/$slug/start': {
       id: '/_authenticated/training/$slug/start'
-      path: '/training/$slug/start'
+      path: '/start'
       fullPath: '/training/$slug/start'
       preLoaderRoute: typeof AuthenticatedTrainingSlugStartRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedTrainingSlugRoute
     }
   }
 }
@@ -428,14 +446,29 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedTrainingSlugRouteChildren {
+  AuthenticatedTrainingSlugStartRoute: typeof AuthenticatedTrainingSlugStartRoute
+  AuthenticatedTrainingSlugIndexRoute: typeof AuthenticatedTrainingSlugIndexRoute
+}
+
+const AuthenticatedTrainingSlugRouteChildren: AuthenticatedTrainingSlugRouteChildren =
+  {
+    AuthenticatedTrainingSlugStartRoute: AuthenticatedTrainingSlugStartRoute,
+    AuthenticatedTrainingSlugIndexRoute: AuthenticatedTrainingSlugIndexRoute,
+  }
+
+const AuthenticatedTrainingSlugRouteWithChildren =
+  AuthenticatedTrainingSlugRoute._addFileChildren(
+    AuthenticatedTrainingSlugRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedPlaySessionIdRoute: typeof AuthenticatedPlaySessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
-  AuthenticatedTrainingSlugStartRoute: typeof AuthenticatedTrainingSlugStartRoute
-  AuthenticatedTrainingSlugIndexRoute: typeof AuthenticatedTrainingSlugIndexRoute
+  AuthenticatedTrainingSlugRoute: typeof AuthenticatedTrainingSlugRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -444,8 +477,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedPlaySessionIdRoute: AuthenticatedPlaySessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
-  AuthenticatedTrainingSlugStartRoute: AuthenticatedTrainingSlugStartRoute,
-  AuthenticatedTrainingSlugIndexRoute: AuthenticatedTrainingSlugIndexRoute,
+  AuthenticatedTrainingSlugRoute: AuthenticatedTrainingSlugRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
