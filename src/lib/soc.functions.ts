@@ -176,6 +176,107 @@ export const createRegistrationLink = createServerFn({ method: "POST" })
     return link;
   });
 
+export const registerEmployee = createServerFn({ method: "POST" })
+  .inputValidator((i) =>
+    z
+      .object({
+        token: z.string().min(12).max(120),
+        full_name: z.string().min(1).max(120),
+        employee_code: z.string().min(1).max(80),
+        department: z.string().min(1).max(80),
+        email: z.string().email().max(180),
+        password: z.string().min(8).max(128),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+
+    const { data: link, error: linkError } = await supabaseAdmin
+      .from("registration_links")
+      .select("id, campaign_id, expires_at, is_active")
+      .eq("token", data.token)
+      .maybeSingle();
+
+    if (linkError) throw linkError;
+    if (!link || !link.is_active) throw new Error("Registration link is invalid");
+    if (link.expires_at && new Date(link.expires_at) < new Date()) {
+      throw new Error("Registration link has expired");
+    }
+
+    const { data: campaign } = await supabaseAdmin
+      .from("campaigns")
+      .select("id, registration_end, is_disabled")
+      .eq("id", link.campaign_id)
+      .maybeSingle();
+
+    if (!campaign || campaign.is_disabled) throw new Error("Campaign is not available");
+    if (campaign.registration_end && new Date(campaign.registration_end) < new Date()) {
+      throw new Error("Registration for this campaign has closed");
+    }
+
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("id, status")
+      .eq("email", normalizedEmail)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingProfile?.status === "pending") {
+      return { ok: true, status: "pending" as const };
+    }
+    if (existingProfile?.status === "active") {
+      throw new Error("An active account already exists for this email");
+    }
+    if (existingProfile?.status === "rejected") {
+      throw new Error("This registration request was rejected");
+    }
+
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: normalizedEmail,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: data.full_name.trim(),
+        department: data.department.trim(),
+        employee_code: data.employee_code.trim(),
+        campaign_id: link.campaign_id,
+      },
+    });
+
+    if (createError || !created.user) {
+      throw new Error(createError?.message || "Registration could not be submitted");
+    }
+
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        full_name: data.full_name.trim(),
+        department: data.department.trim(),
+        employee_code: data.employee_code.trim(),
+        email: normalizedEmail,
+        campaign_id: link.campaign_id,
+        status: "pending",
+      })
+      .eq("id", created.user.id);
+
+    if (profileError) throw profileError;
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: null,
+      action: "employee_registration_submitted",
+      target_type: "profile",
+      target_id: created.user.id,
+      meta: { campaign_id: link.campaign_id, email: normalizedEmail },
+    });
+
+    return { ok: true, status: "pending" as const };
+  });
+
 // ============================================================
 // SCENARIO + SESSION
 // ============================================================
