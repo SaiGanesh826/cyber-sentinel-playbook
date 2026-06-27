@@ -11,7 +11,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/training/$slug")({
+export const Route = createFileRoute("/_authenticated/training/$slug/")({
   component: ModuleOverview,
 });
 
