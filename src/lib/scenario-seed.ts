@@ -7,7 +7,7 @@ export interface SeedScenario {
   attachments: { name: string; size: string; suspicious?: boolean }[];
   links: { text: string; href: string; suspicious?: boolean; behavior?: string }[];
   red_flags: { id: string; label: string; explanation: string }[];
-  correct_action: string; explanation: string; is_mfa: boolean; tags: string[];
+  correct_action: string; explanation: string; is_mfa: boolean; tags: string[]; payload?: unknown;
 }
 
 export const SEED_SCENARIOS: SeedScenario[] = [
