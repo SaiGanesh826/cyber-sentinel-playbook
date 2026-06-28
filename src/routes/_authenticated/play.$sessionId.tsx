@@ -102,7 +102,13 @@ function loadState(sessionId: string): PersistedState | null {
 
 function VirtualOffice() {
   const { sessionId } = Route.useParams();
-  const emails = useMemo(() => getInboxClient(), []);
+  const fetchEmails = useServerFn(getSessionEmails);
+  const { data: emailData, isLoading } = useQuery({
+    queryKey: ["session-emails", sessionId],
+    queryFn: () => fetchEmails({ data: { session_id: sessionId } }),
+    staleTime: Infinity,
+  });
+  const emails = emailData?.emails ?? [];
   const [appOpen, setAppOpen] = useState<"none" | "mail">("mail");
   const [clock, setClock] = useState(new Date());
 
@@ -110,6 +116,14 @@ function VirtualOffice() {
     const i = setInterval(() => setClock(new Date()), 1000 * 30);
     return () => clearInterval(i);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 grid place-items-center bg-[#1f4170] text-white">
+        <div className="text-sm opacity-80">Booting your virtual workstation…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#1f4170] text-white">

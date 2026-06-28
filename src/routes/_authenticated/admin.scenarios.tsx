@@ -421,7 +421,7 @@ function EditorDrawer({
   onPreview: (s: Scenario) => void;
 }) {
   const [s, setS] = useState<Scenario>({ ...initial });
-  const set = (patch: Partial<Scenario>) => setS((x) => ({ ...x, ...patch }));
+  const set = (patch: Partial<Scenario>) => setS((x: Scenario) => ({ ...x, ...patch }));
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/40 backdrop-blur-sm">

@@ -9,11 +9,13 @@ import { z } from "zod";
 export interface ClientLink {
   text: string;
   href: string;
+  suspicious?: boolean;
   behavior?: string; // 'fake_m365' | 'fake_hr' | 'fake_vpn' | 'fake_payment' | 'fake_document' | 'internal_form' | 'survey' | 'meeting_invite' | 'internal_action' | 'external'
 }
 export interface ClientAttachment {
   name: string;
   size: string;
+  suspicious?: boolean;
 }
 export interface ClientEmail {
   id: string;
@@ -43,11 +45,13 @@ function redactScenarioRow(row: any, position: number): ClientEmail {
   const links = (row.links ?? []).map((l: any) => ({
     text: l.text,
     href: l.href,
+    suspicious: l.suspicious,
     behavior: l.behavior,
   }));
   const attachments = (row.attachments ?? []).map((a: any) => ({
     name: a.name,
     size: a.size,
+    suspicious: a.suspicious,
   }));
   return {
     id: row.id,
