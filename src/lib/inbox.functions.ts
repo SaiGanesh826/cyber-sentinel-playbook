@@ -653,3 +653,154 @@ export const submitInboxTraining = createServerFn({ method: "POST" })
 
     return { session_id: session.id, score_id: score.id, total };
   });
+
+// ============================================================
+// ADMIN MANAGEMENT — super_admin only
+// ============================================================
+async function requireSuperAdmin(supabase: any, userId: string) {
+  const { data } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "super_admin",
+  });
+  if (!data) throw new Error("Forbidden: super admin only");
+}
+
+export const createAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        email: z.string().email(),
+        full_name: z.string().min(1).max(120),
+        password: z.string().min(8).max(128),
+        department: z.string().max(80).optional(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.full_name, department: data.department },
+    });
+    if (error || !created.user) throw new Error(error?.message || "Create failed");
+    await supabaseAdmin.from("profiles").update({ status: "active" }).eq("id", created.user.id);
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert([{ user_id: created.user.id, role: "admin" }], { onConflict: "user_id,role" });
+    await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", created.user.id)
+      .eq("role", "employee");
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "create_admin",
+      target_type: "user",
+      target_id: created.user.id,
+    });
+    return { ok: true, user_id: created.user.id };
+  });
+
+export const promoteToSuperAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert(
+        [
+          { user_id: data.user_id, role: "super_admin" },
+          { user_id: data.user_id, role: "admin" },
+        ],
+        { onConflict: "user_id,role" },
+      );
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "promote_super_admin",
+      target_type: "user",
+      target_id: data.user_id,
+    });
+    return { ok: true };
+  });
+
+export const demoteAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId) throw new Error("You cannot demote yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.user_id)
+      .in("role", ["super_admin", "admin", "manager"]);
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert([{ user_id: data.user_id, role: "employee" }], { onConflict: "user_id,role" });
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "demote_admin",
+      target_type: "user",
+      target_id: data.user_id,
+    });
+    return { ok: true };
+  });
+
+export const deleteAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId) throw new Error("You cannot delete yourself");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "delete_admin",
+      target_type: "user",
+      target_id: data.user_id,
+    });
+    return { ok: true };
+  });
+
+export const setAdminRoles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        roles: z.array(z.enum(["admin", "manager"])),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.user_id)
+      .in("role", ["admin", "manager", "employee"]);
+    const rows = data.roles.map((role) => ({ user_id: data.user_id, role }));
+    if (rows.length === 0) {
+      rows.push({ user_id: data.user_id, role: "employee" as any });
+    }
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert(rows, { onConflict: "user_id,role" });
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "set_admin_roles",
+      target_type: "user",
+      target_id: data.user_id,
+      meta: { roles: data.roles },
+    });
+    return { ok: true };
+  });
