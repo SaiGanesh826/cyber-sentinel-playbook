@@ -589,8 +589,13 @@ function MailClient({
       )}
 
       {phishWarning && (
-        <PhishingSimulationModal
+        <FakePortalSimulation
           href={phishWarning.href}
+          behavior={
+            emails
+              .flatMap((e) => e.links)
+              .find((l) => l.href === phishWarning.href)?.behavior
+          }
           onAcknowledge={() => setPhishWarning(null)}
         />
       )}
@@ -799,39 +804,127 @@ function Toolbar({ icon: Icon, onClick, children }: { icon: any; onClick: () => 
 }
 
 // ============================================================
-// PHISHING ATTACK SIMULATION POPUP — blocks all interaction
+// FAKE-PORTAL SIMULATION — renders a realistic-looking phishing
+// landing page based on the link's `behavior`, then reveals the
+// training reveal screen on submit/close. No real credentials are
+// ever submitted anywhere — inputs are captured and discarded.
 // ============================================================
-function PhishingSimulationModal({
-  href, onAcknowledge,
-}: { href: string; onAcknowledge: () => void }) {
+function FakePortalSimulation({
+  href,
+  behavior,
+  onAcknowledge,
+}: {
+  href: string;
+  behavior?: string;
+  onAcknowledge: () => void;
+}) {
+  const [stage, setStage] = useState<"portal" | "reveal">("portal");
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const portal = getPortalSpec(behavior);
+
+  function submitFakeForm(e: React.FormEvent) {
+    e.preventDefault();
+    setStage("reveal");
+  }
+
+  if (stage === "portal") {
+    return (
+      <div className="absolute inset-0 z-[60] grid place-items-center bg-black/80 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-md overflow-hidden rounded-lg bg-white text-[#202124] shadow-2xl">
+          {/* Browser chrome */}
+          <div className="flex items-center gap-1.5 border-b border-gray-200 bg-gray-100 px-3 py-2">
+            <span className="h-3 w-3 rounded-full bg-red-400" />
+            <span className="h-3 w-3 rounded-full bg-yellow-400" />
+            <span className="h-3 w-3 rounded-full bg-green-400" />
+            <div className="ml-2 flex flex-1 items-center gap-1.5 rounded bg-white px-2 py-1 mono text-[11px] text-gray-600">
+              <Lock className="h-3 w-3 text-gray-500" />
+              <span className="truncate">{href}</span>
+            </div>
+          </div>
+          {/* Portal */}
+          <div className="px-7 py-8">
+            <div
+              className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-md text-white"
+              style={{ background: portal.color }}
+            >
+              <portal.icon className="h-6 w-6" />
+            </div>
+            <h2 className="text-center text-lg font-semibold">{portal.title}</h2>
+            <p className="mt-1 text-center text-xs text-gray-500">{portal.subtitle}</p>
+            <form onSubmit={submitFakeForm} className="mt-6 space-y-3">
+              <label className="block">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+                  {portal.userLabel}
+                </span>
+                <input
+                  autoFocus
+                  value={user}
+                  onChange={(e) => setUser(e.target.value)}
+                  placeholder={portal.userPlaceholder}
+                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-gray-500">
+                  Password
+                </span>
+                <input
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  placeholder="••••••••"
+                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={!user || !pass}
+                className="w-full rounded py-2 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: portal.color }}
+              >
+                {portal.cta}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStage("reveal")}
+                className="block w-full text-center text-[11px] text-gray-500 hover:underline"
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Reveal screen
   return (
-    <div className="absolute inset-0 z-[60] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+    <div className="absolute inset-0 z-[60] grid place-items-center bg-black/80 p-4 backdrop-blur-sm">
       <div className="w-full max-w-lg rounded-lg border-2 border-destructive bg-surface text-foreground shadow-2xl">
         <div className="flex items-center gap-3 rounded-t-lg bg-destructive px-5 py-4 text-destructive-foreground">
           <AlertTriangle className="h-7 w-7" />
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider opacity-90">Training Simulation</div>
+            <div className="text-xs font-semibold uppercase tracking-wider opacity-90">
+              Training Simulation
+            </div>
             <h3 className="text-lg font-bold">⚠️ Phishing Attack Simulated</h3>
           </div>
         </div>
         <div className="space-y-3 p-5 text-sm">
-          <p className="font-semibold text-destructive">You clicked a malicious link.</p>
-          <div className="mono break-all rounded-md bg-muted px-2.5 py-1.5 text-[11px] text-muted-foreground">{href}</div>
-          <p className="text-foreground">In a real-world attack, this action could have:</p>
-          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-            <li>Stolen your credentials.</li>
-            <li>Installed malware on your device.</li>
-            <li>Redirected you to a fake login page.</li>
-            <li>Compromised your organization's data.</li>
-          </ul>
-          <div className="rounded-md border border-border bg-muted/40 p-3 text-xs">
-            <div className="mb-1 font-semibold text-foreground">Remember:</div>
-            <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
-              <li>Verify the sender before clicking.</li>
-              <li>Hover over links to inspect the destination URL.</li>
-              <li>Report suspicious emails instead of interacting with them.</li>
-            </ul>
+          <p className="font-semibold text-destructive">
+            You interacted with a fake {portal.title.toLowerCase()}.
+          </p>
+          <div className="mono break-all rounded-md bg-muted px-2.5 py-1.5 text-[11px] text-muted-foreground">
+            {href}
           </div>
+          <p>In a real attack, the credentials you typed would now belong to the attacker.</p>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <li>Always inspect the URL bar — look-alike domains are the #1 tell.</li>
+            <li>Real sign-in pages live on your organisation's domain or the official provider domain.</li>
+            <li>If a link arrived by email, navigate to the service directly in your browser instead.</li>
+          </ul>
           <div className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">
             <span>Score Penalty</span>
             <span>−50 Points</span>
@@ -849,6 +942,71 @@ function PhishingSimulationModal({
       </div>
     </div>
   );
+}
+
+interface PortalSpec {
+  title: string;
+  subtitle: string;
+  color: string;
+  icon: any;
+  userLabel: string;
+  userPlaceholder: string;
+  cta: string;
+}
+function getPortalSpec(behavior?: string): PortalSpec {
+  switch (behavior) {
+    case "fake_hr":
+      return {
+        title: "Nipun HR Portal",
+        subtitle: "Sign in with your corporate credentials",
+        color: "#0a8a45",
+        icon: Building2,
+        userLabel: "Employee ID",
+        userPlaceholder: "EMP000123",
+        cta: "Sign in to HR Portal",
+      };
+    case "fake_vpn":
+      return {
+        title: "Nipun VPN Gateway",
+        subtitle: "Authenticate to access internal network",
+        color: "#1f4170",
+        icon: Lock,
+        userLabel: "Username",
+        userPlaceholder: "username@nipun.com",
+        cta: "Connect to VPN",
+      };
+    case "fake_payment":
+      return {
+        title: "Payment Authorisation",
+        subtitle: "Verify the receiving account to release funds",
+        color: "#d83b01",
+        icon: CreditCard,
+        userLabel: "Beneficiary email",
+        userPlaceholder: "you@nipun.com",
+        cta: "Verify & Authorise",
+      };
+    case "fake_document":
+      return {
+        title: "Document Portal",
+        subtitle: "Sign in to view the shared document",
+        color: "#f7b500",
+        icon: FileSignature,
+        userLabel: "Email",
+        userPlaceholder: "you@nipun.com",
+        cta: "Open Document",
+      };
+    case "fake_m365":
+    default:
+      return {
+        title: "Microsoft 365",
+        subtitle: "Sign in to your account",
+        color: "#0078d4",
+        icon: Mail,
+        userLabel: "Email, phone, or Skype",
+        userPlaceholder: "you@nipun.com",
+        cta: "Sign in",
+      };
+  }
 }
 
 // ============================================================
