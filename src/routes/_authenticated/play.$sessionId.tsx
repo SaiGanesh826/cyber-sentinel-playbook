@@ -1,12 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   logInboxAction,
   submitInboxTraining,
+  getSessionEmails,
+  type ClientEmail,
 } from "@/lib/inbox.functions";
-import { getInboxClient, type InboxClientEmail } from "@/lib/inbox-data";
 import { NipunLogo } from "@/components/brand";
 import {
   Mail,
@@ -29,11 +31,18 @@ import {
   ShieldCheck,
   Smartphone,
   Clock,
+  Lock,
+  Building2,
+  CreditCard,
+  FileSignature,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/play/$sessionId")({
   component: VirtualOffice,
 });
+
+// Backwards-compat alias used throughout this file
+type InboxClientEmail = ClientEmail;
 
 type EmailStatus = "unopened" | "opened" | "reported";
 
