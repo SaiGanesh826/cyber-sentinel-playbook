@@ -1561,3 +1561,185 @@ function ReadOnly({ label, children }: { label: string; children: React.ReactNod
     </div>
   );
 }
+
+// ============================================================
+// ENTERPRISE EMAIL PRESENTATION HELPERS
+// ============================================================
+
+const AVATAR_PALETTE = [
+  "#1f4170", "#0a8a45", "#d83b01", "#7c3aed", "#0067b8",
+  "#b45309", "#0891b2", "#be185d", "#15803d", "#4338ca",
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+export function avatarFor(name: string): { initials: string; color: string } {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? parts[0]?.[1] ?? "");
+  const color = AVATAR_PALETTE[hashString(name) % AVATAR_PALETTE.length];
+  return { initials: initials.toUpperCase().slice(0, 2), color };
+}
+
+export function snippetFromHtml(html: string): string {
+  const text = html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.slice(0, 90);
+}
+
+const INTERNAL_DOMAINS = ["nipun.com"];
+
+export function isExternalSender(senderEmail: string): boolean {
+  const domain = senderEmail.split("@")[1]?.toLowerCase() ?? "";
+  return !INTERNAL_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
+}
+
+function referenceFor(id: string): string {
+  return "MSG-" + (hashString(id) % 0xFFFFFF).toString(16).toUpperCase().padStart(6, "0");
+}
+
+function replyToFor(email: InboxClientEmail): string | null {
+  // Surface a reply-to hint when the sender is using a look-alike domain
+  const susp = email.links.some((l) => l.suspicious);
+  if (susp && isExternalSender(email.sender_email)) {
+    return email.sender_email;
+  }
+  return null;
+}
+
+function ccFor(email: InboxClientEmail): string | null {
+  // Deterministic but plausible CC for ~25% of emails
+  const h = hashString(email.id);
+  if (h % 4 !== 0) return null;
+  const pool = [
+    "ops-team@nipun.com",
+    "finance.team@nipun.com",
+    "leadership@nipun.com",
+    "hr.notifications@nipun.com",
+    "it-helpdesk@nipun.com",
+  ];
+  return pool[h % pool.length];
+}
+
+function IconBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+// ============================================================
+// CORPORATE FOOTER — appended to every email body
+// ============================================================
+function CorporateFooter({ email }: { email: InboxClientEmail }) {
+  const external = isExternalSender(email.sender_email);
+  const domain = email.sender_email.split("@")[1] ?? "example.com";
+  const company = external
+    ? domain.split(".")[0].replace(/^[a-z]/, (c) => c.toUpperCase())
+    : "Nipun Technologies Pvt. Ltd.";
+  const website = external ? `www.${domain}` : "www.nipun.com";
+  const address = external
+    ? "Registered Office on file with sender"
+    : "Nipun Tower, 4th Floor, Outer Ring Road, Bengaluru 560103, India";
+  // Only append our signature when the body doesn't already include one
+  const bodyLower = email.body_html.toLowerCase();
+  const hasSig = bodyLower.includes("confidential") || bodyLower.includes("disclaimer") ||
+                 bodyLower.includes("unsubscribe") || bodyLower.includes("&copy;") ||
+                 bodyLower.includes("©");
+  if (hasSig) return null;
+  return (
+    <div className="mt-6 border-t border-[#e5e7eb] pt-4 text-[11px] leading-relaxed text-[#6b7280]">
+      <div className="mb-2">
+        <div className="font-semibold text-[#374151]">{email.sender_name}</div>
+        <div>{company}</div>
+        <div>{address}</div>
+        <div className="mt-1">
+          <a className="text-[#1a73e8]" href={`https://${website}`}>{website}</a>
+          {" · "}
+          <a className="text-[#1a73e8]" href={`mailto:${email.sender_email}`}>{email.sender_email}</a>
+        </div>
+      </div>
+      <div className="italic">
+        CONFIDENTIALITY NOTICE: This email and any attachments are intended solely for the
+        addressee. If you received this in error, please notify the sender and delete the
+        message. Views expressed are those of the sender and may not represent {company}.
+      </div>
+      <div className="mt-2">© {new Date().getFullYear()} {company}. All rights reserved.</div>
+    </div>
+  );
+}
+
+// ============================================================
+// ATTACHMENT CARD — file-type aware (Outlook/Gmail style)
+// ============================================================
+interface FileMeta { icon: any; color: string; label: string }
+
+function fileMetaFor(name: string): FileMeta {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  switch (ext) {
+    case "pdf":
+      return { icon: FileText, color: "#d93025", label: "PDF" };
+    case "xls": case "xlsx": case "csv":
+      return { icon: FileSpreadsheet, color: "#0f7b3f", label: ext.toUpperCase() };
+    case "doc": case "docx":
+      return { icon: FileText, color: "#1a73e8", label: ext.toUpperCase() };
+    case "ppt": case "pptx":
+      return { icon: FileText, color: "#d24726", label: ext.toUpperCase() };
+    case "zip": case "rar": case "7z": case "gz":
+      return { icon: FileArchive, color: "#6b7280", label: ext.toUpperCase() };
+    case "png": case "jpg": case "jpeg": case "gif": case "webp": case "svg":
+      return { icon: FileImage, color: "#a855f7", label: ext.toUpperCase() };
+    case "html": case "htm": case "js": case "exe": case "bat":
+      return { icon: FileCode, color: "#dc2626", label: ext.toUpperCase() };
+    default:
+      return { icon: FileIcon, color: "#6b7280", label: ext.toUpperCase() || "FILE" };
+  }
+}
+
+function AttachmentCard({ name, size, onOpen }: { name: string; size: string; onOpen: () => void }) {
+  const meta = fileMetaFor(name);
+  const Icon = meta.icon;
+  return (
+    <div className="group flex w-[260px] items-stretch overflow-hidden rounded-md border border-border bg-white shadow-sm">
+      <div
+        className="grid w-12 shrink-0 place-items-center text-white"
+        style={{ background: meta.color }}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center px-3 py-2">
+        <div className="truncate text-[13px] font-medium text-foreground" title={name}>
+          {name}
+        </div>
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+          <span>·</span>
+          <span>{size}</span>
+        </div>
+      </div>
+      <button
+        onClick={onOpen}
+        className="grid w-10 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+        title="Download"
+      >
+        <Download className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
