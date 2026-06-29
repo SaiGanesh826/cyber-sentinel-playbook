@@ -23,6 +23,7 @@ import {
   Archive,
   AlertTriangle,
   Reply,
+  ReplyAll,
   Forward,
   ShieldAlert,
   Paperclip,
@@ -35,6 +36,17 @@ import {
   Building2,
   CreditCard,
   FileSignature,
+  Download,
+  MoreVertical,
+  Printer,
+  ChevronDown,
+  FileSpreadsheet,
+  FileArchive,
+  FileImage,
+  FileCode,
+  File as FileIcon,
+  Globe2,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/play/$sessionId")({
