@@ -754,30 +754,102 @@ function ReadingPane({
     return el as HTMLAnchorElement | null;
   }
   const visitedBanner = email.links.some((l) => visitedLinks.includes(l.href));
+  const external = isExternalSender(email.sender_email);
+  const avatar = avatarFor(email.sender_name);
+  const reference = referenceFor(email.id);
+  const replyTo = replyToFor(email);
+  const cc = ccFor(email);
   return (
     <>
-      <header className="border-b border-border p-5">
-        <h2 className="text-xl font-semibold">{email.subject}</h2>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary mono text-xs">
-            {email.sender_name.slice(0, 2).toUpperCase()}
+      {/* Outlook-style header */}
+      <header className="border-b border-border bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 pt-4">
+          <h2 className="text-[20px] font-semibold leading-tight text-[#202124]">{email.subject}</h2>
+          <div className="flex items-center gap-1">
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="Star">
+              <Star className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="Print">
+              <Printer className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="More">
+              <MoreVertical className="h-4 w-4" />
+            </button>
           </div>
-          <div>
-            <div className="font-medium">{email.sender_name}</div>
-            <div className="mono text-xs text-muted-foreground">&lt;{email.sender_email}&gt;</div>
-          </div>
-          <div className="ml-auto mono text-xs text-muted-foreground">{email.received_at}</div>
         </div>
-        <div className="mt-2 mono text-xs text-muted-foreground">To: {email.to}</div>
+        <div className="mt-1 flex items-center gap-2 px-5 text-[11px] text-muted-foreground">
+          <span className="mono">Ref: {reference}</span>
+          <span>·</span>
+          <span>Inbox</span>
+          {external && (
+            <>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                <Globe2 className="h-2.5 w-2.5" /> EXTERNAL SENDER
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-start gap-3 px-5 pb-4">
+          <div
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-semibold text-white shadow-sm"
+            style={{ background: avatar.color }}
+          >
+            {avatar.initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+              <span className="font-semibold text-foreground">{email.sender_name}</span>
+              <span className="mono text-xs text-muted-foreground">&lt;{email.sender_email}&gt;</span>
+              <button className="ml-1 inline-flex items-center gap-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground">
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="mt-0.5 grid grid-cols-[64px_1fr] gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+              <span>to</span>
+              <span className="truncate text-foreground/80">{email.to}</span>
+              {cc && (
+                <>
+                  <span>cc</span>
+                  <span className="truncate text-foreground/80">{cc}</span>
+                </>
+              )}
+              {replyTo && replyTo !== email.sender_email && (
+                <>
+                  <span>reply-to</span>
+                  <span className="mono truncate text-foreground/80">{replyTo}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="mono text-xs text-muted-foreground">{email.received_at}</div>
+            <div className="mt-1 flex items-center justify-end gap-1">
+              <IconBtn icon={Reply} label="Reply" onClick={() => onRecord("reply_clicked", email.id)} />
+              <IconBtn icon={ReplyAll} label="Reply all" onClick={() => onRecord("reply_all_clicked", email.id)} />
+              <IconBtn icon={Forward} label="Forward" onClick={() => onRecord("forward_clicked", email.id)} />
+            </div>
+          </div>
+        </div>
+
+        {external && (
+          <div className="border-y border-amber-200 bg-amber-50 px-5 py-2 text-[12px] text-amber-900">
+            <b>CAUTION:</b> This email originated from outside the organisation. Do not click links or open attachments unless you recognise the sender and know the content is safe.
+          </div>
+        )}
+
         {visitedBanner && (
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
-            <AlertTriangle className="h-3.5 w-3.5" />
+          <div className="border-y border-destructive/30 bg-destructive/10 px-5 py-2 text-[12px] font-medium text-destructive">
+            <AlertTriangle className="mr-1 inline-block h-3.5 w-3.5 align-text-bottom" />
             You clicked a malicious link in this email during the simulation.
           </div>
         )}
       </header>
+
+      {/* Email body */}
       <div
-        className="not-prose max-w-none flex-1 overflow-y-auto bg-white p-6 text-sm leading-relaxed text-[#202124]"
+        className="not-prose max-w-none flex-1 overflow-y-auto bg-white px-6 py-6 text-sm leading-relaxed text-[#202124]"
         onClickCapture={(ev) => {
           const a = closestAnchor(ev.target as HTMLElement);
           if (a) {
@@ -790,24 +862,25 @@ function ReadingPane({
           if (a) onHoverLink(a.getAttribute("href") || a.href);
         }}
         onMouseOut={() => onHoverLink(null)}
-        dangerouslySetInnerHTML={{ __html: email.body_html }}
-      />
+      >
+        <div dangerouslySetInnerHTML={{ __html: email.body_html }} />
+        <CorporateFooter email={email} />
+      </div>
+
       {email.attachments.length > 0 && (
-        <div className="border-t border-border p-4">
-          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
-            Attachments
+        <div className="border-t border-border bg-[#fafbfd] px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Paperclip className="h-3 w-3" />
+            {email.attachments.length} attachment{email.attachments.length > 1 ? "s" : ""}
           </div>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-3">
             {email.attachments.map((a) => (
               <li key={a.name}>
-                <button
-                  onClick={() => onOpenAttachment(a.name)}
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-1.5 text-xs hover:bg-accent/10"
-                >
-                  <Paperclip className="h-3 w-3" />
-                  <span className="mono">{a.name}</span>
-                  <span className="text-muted-foreground">· {a.size}</span>
-                </button>
+                <AttachmentCard
+                  name={a.name}
+                  size={a.size}
+                  onOpen={() => onOpenAttachment(a.name)}
+                />
               </li>
             ))}
           </ul>
