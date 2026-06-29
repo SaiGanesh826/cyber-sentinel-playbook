@@ -508,35 +508,62 @@ function MailClient({
               filtered.map((e) => {
                 const status: EmailStatus = statuses[e.id] ?? "unopened";
                 const isSelected = selectedId === e.id;
+                const avatar = avatarFor(e.sender_name);
+                const snippet = snippetFromHtml(e.body_html);
+                const external = isExternalSender(e.sender_email);
+                const hasAttach = e.attachments.length > 0;
                 return (
                   <li key={e.id}>
                     <button
                       onClick={() => openEmail(e.id)}
-                      className={`flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-left text-sm transition ${
-                        isSelected ? "bg-primary/5" : "hover:bg-muted/60"
+                      className={`flex w-full items-start gap-3 border-b border-border px-3 py-3 text-left text-sm transition ${
+                        isSelected ? "bg-primary/5" : status === "unopened" ? "bg-white hover:bg-muted/60" : "hover:bg-muted/60"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`truncate ${
-                            status === "unopened" ? "font-semibold" : "font-normal"
-                          }`}
-                        >
-                          {e.sender_name}
-                        </span>
-                        <span className="mono shrink-0 text-[10px] text-muted-foreground">
-                          {e.received_at}
-                        </span>
+                      <div
+                        className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full text-[11px] font-semibold text-white shadow-sm"
+                        style={{ background: avatar.color }}
+                      >
+                        {avatar.initials}
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`truncate ${
-                            status === "unopened" ? "font-medium" : ""
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`truncate ${
+                              status === "unopened" ? "font-semibold text-foreground" : "text-foreground/80"
+                            }`}
+                          >
+                            {e.sender_name}
+                          </span>
+                          <span className="mono shrink-0 text-[10px] text-muted-foreground">
+                            {e.received_at}
+                          </span>
+                        </div>
+                        <div
+                          className={`mt-0.5 truncate text-[13px] ${
+                            status === "unopened" ? "font-medium text-foreground" : "text-foreground/80"
                           }`}
                         >
                           {e.subject}
-                        </span>
-                        <StatusBadge status={status} />
+                        </div>
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {snippet}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {external && (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                              <Globe2 className="h-2.5 w-2.5" /> EXTERNAL
+                            </span>
+                          )}
+                          {hasAttach && (
+                            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              <Paperclip className="h-2.5 w-2.5" /> {e.attachments.length}
+                            </span>
+                          )}
+                          <span className="ml-auto">
+                            <StatusBadge status={status} />
+                          </span>
+                        </div>
                       </div>
                     </button>
                   </li>
