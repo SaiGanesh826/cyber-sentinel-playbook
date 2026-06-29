@@ -23,6 +23,7 @@ import {
   Archive,
   AlertTriangle,
   Reply,
+  ReplyAll,
   Forward,
   ShieldAlert,
   Paperclip,
@@ -35,6 +36,17 @@ import {
   Building2,
   CreditCard,
   FileSignature,
+  Download,
+  MoreVertical,
+  Printer,
+  ChevronDown,
+  FileSpreadsheet,
+  FileArchive,
+  FileImage,
+  FileCode,
+  File as FileIcon,
+  Globe2,
+  ExternalLink,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/play/$sessionId")({
@@ -496,35 +508,62 @@ function MailClient({
               filtered.map((e) => {
                 const status: EmailStatus = statuses[e.id] ?? "unopened";
                 const isSelected = selectedId === e.id;
+                const avatar = avatarFor(e.sender_name);
+                const snippet = snippetFromHtml(e.body_html);
+                const external = isExternalSender(e.sender_email);
+                const hasAttach = e.attachments.length > 0;
                 return (
                   <li key={e.id}>
                     <button
                       onClick={() => openEmail(e.id)}
-                      className={`flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-left text-sm transition ${
-                        isSelected ? "bg-primary/5" : "hover:bg-muted/60"
+                      className={`flex w-full items-start gap-3 border-b border-border px-3 py-3 text-left text-sm transition ${
+                        isSelected ? "bg-primary/5" : status === "unopened" ? "bg-white hover:bg-muted/60" : "hover:bg-muted/60"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`truncate ${
-                            status === "unopened" ? "font-semibold" : "font-normal"
-                          }`}
-                        >
-                          {e.sender_name}
-                        </span>
-                        <span className="mono shrink-0 text-[10px] text-muted-foreground">
-                          {e.received_at}
-                        </span>
+                      <div
+                        className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full text-[11px] font-semibold text-white shadow-sm"
+                        style={{ background: avatar.color }}
+                      >
+                        {avatar.initials}
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span
-                          className={`truncate ${
-                            status === "unopened" ? "font-medium" : ""
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`truncate ${
+                              status === "unopened" ? "font-semibold text-foreground" : "text-foreground/80"
+                            }`}
+                          >
+                            {e.sender_name}
+                          </span>
+                          <span className="mono shrink-0 text-[10px] text-muted-foreground">
+                            {e.received_at}
+                          </span>
+                        </div>
+                        <div
+                          className={`mt-0.5 truncate text-[13px] ${
+                            status === "unopened" ? "font-medium text-foreground" : "text-foreground/80"
                           }`}
                         >
                           {e.subject}
-                        </span>
-                        <StatusBadge status={status} />
+                        </div>
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {snippet}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {external && (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                              <Globe2 className="h-2.5 w-2.5" /> EXTERNAL
+                            </span>
+                          )}
+                          {hasAttach && (
+                            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              <Paperclip className="h-2.5 w-2.5" /> {e.attachments.length}
+                            </span>
+                          )}
+                          <span className="ml-auto">
+                            <StatusBadge status={status} />
+                          </span>
+                        </div>
                       </div>
                     </button>
                   </li>
@@ -715,30 +754,102 @@ function ReadingPane({
     return el as HTMLAnchorElement | null;
   }
   const visitedBanner = email.links.some((l) => visitedLinks.includes(l.href));
+  const external = isExternalSender(email.sender_email);
+  const avatar = avatarFor(email.sender_name);
+  const reference = referenceFor(email.id);
+  const replyTo = replyToFor(email);
+  const cc = ccFor(email);
   return (
     <>
-      <header className="border-b border-border p-5">
-        <h2 className="text-xl font-semibold">{email.subject}</h2>
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary mono text-xs">
-            {email.sender_name.slice(0, 2).toUpperCase()}
+      {/* Outlook-style header */}
+      <header className="border-b border-border bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 pt-4">
+          <h2 className="text-[20px] font-semibold leading-tight text-[#202124]">{email.subject}</h2>
+          <div className="flex items-center gap-1">
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="Star">
+              <Star className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="Print">
+              <Printer className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-muted" title="More">
+              <MoreVertical className="h-4 w-4" />
+            </button>
           </div>
-          <div>
-            <div className="font-medium">{email.sender_name}</div>
-            <div className="mono text-xs text-muted-foreground">&lt;{email.sender_email}&gt;</div>
-          </div>
-          <div className="ml-auto mono text-xs text-muted-foreground">{email.received_at}</div>
         </div>
-        <div className="mt-2 mono text-xs text-muted-foreground">To: {email.to}</div>
+        <div className="mt-1 flex items-center gap-2 px-5 text-[11px] text-muted-foreground">
+          <span className="mono">Ref: {reference}</span>
+          <span>·</span>
+          <span>Inbox</span>
+          {external && (
+            <>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                <Globe2 className="h-2.5 w-2.5" /> EXTERNAL SENDER
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-start gap-3 px-5 pb-4">
+          <div
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-semibold text-white shadow-sm"
+            style={{ background: avatar.color }}
+          >
+            {avatar.initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+              <span className="font-semibold text-foreground">{email.sender_name}</span>
+              <span className="mono text-xs text-muted-foreground">&lt;{email.sender_email}&gt;</span>
+              <button className="ml-1 inline-flex items-center gap-0.5 rounded text-[11px] text-muted-foreground hover:text-foreground">
+                <ChevronDown className="h-3 w-3" />
+              </button>
+            </div>
+            <div className="mt-0.5 grid grid-cols-[64px_1fr] gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+              <span>to</span>
+              <span className="truncate text-foreground/80">{email.to}</span>
+              {cc && (
+                <>
+                  <span>cc</span>
+                  <span className="truncate text-foreground/80">{cc}</span>
+                </>
+              )}
+              {replyTo && replyTo !== email.sender_email && (
+                <>
+                  <span>reply-to</span>
+                  <span className="mono truncate text-foreground/80">{replyTo}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="mono text-xs text-muted-foreground">{email.received_at}</div>
+            <div className="mt-1 flex items-center justify-end gap-1">
+              <IconBtn icon={Reply} label="Reply" onClick={() => onRecord("reply_clicked", email.id)} />
+              <IconBtn icon={ReplyAll} label="Reply all" onClick={() => onRecord("reply_all_clicked", email.id)} />
+              <IconBtn icon={Forward} label="Forward" onClick={() => onRecord("forward_clicked", email.id)} />
+            </div>
+          </div>
+        </div>
+
+        {external && (
+          <div className="border-y border-amber-200 bg-amber-50 px-5 py-2 text-[12px] text-amber-900">
+            <b>CAUTION:</b> This email originated from outside the organisation. Do not click links or open attachments unless you recognise the sender and know the content is safe.
+          </div>
+        )}
+
         {visitedBanner && (
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
-            <AlertTriangle className="h-3.5 w-3.5" />
+          <div className="border-y border-destructive/30 bg-destructive/10 px-5 py-2 text-[12px] font-medium text-destructive">
+            <AlertTriangle className="mr-1 inline-block h-3.5 w-3.5 align-text-bottom" />
             You clicked a malicious link in this email during the simulation.
           </div>
         )}
       </header>
+
+      {/* Email body */}
       <div
-        className="not-prose max-w-none flex-1 overflow-y-auto bg-white p-6 text-sm leading-relaxed text-[#202124]"
+        className="not-prose max-w-none flex-1 overflow-y-auto bg-white px-6 py-6 text-sm leading-relaxed text-[#202124]"
         onClickCapture={(ev) => {
           const a = closestAnchor(ev.target as HTMLElement);
           if (a) {
@@ -751,24 +862,25 @@ function ReadingPane({
           if (a) onHoverLink(a.getAttribute("href") || a.href);
         }}
         onMouseOut={() => onHoverLink(null)}
-        dangerouslySetInnerHTML={{ __html: email.body_html }}
-      />
+      >
+        <div dangerouslySetInnerHTML={{ __html: email.body_html }} />
+        <CorporateFooter email={email} />
+      </div>
+
       {email.attachments.length > 0 && (
-        <div className="border-t border-border p-4">
-          <div className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">
-            Attachments
+        <div className="border-t border-border bg-[#fafbfd] px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Paperclip className="h-3 w-3" />
+            {email.attachments.length} attachment{email.attachments.length > 1 ? "s" : ""}
           </div>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-3">
             {email.attachments.map((a) => (
               <li key={a.name}>
-                <button
-                  onClick={() => onOpenAttachment(a.name)}
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-1.5 text-xs hover:bg-accent/10"
-                >
-                  <Paperclip className="h-3 w-3" />
-                  <span className="mono">{a.name}</span>
-                  <span className="text-muted-foreground">· {a.size}</span>
-                </button>
+                <AttachmentCard
+                  name={a.name}
+                  size={a.size}
+                  onOpen={() => onOpenAttachment(a.name)}
+                />
               </li>
             ))}
           </ul>
@@ -1446,6 +1558,188 @@ function ReadOnly({ label, children }: { label: string; children: React.ReactNod
     <div>
       <Label>{label}</Label>
       <div className="mt-1 rounded-md bg-muted px-3 py-2 text-sm mono">{children}</div>
+    </div>
+  );
+}
+
+// ============================================================
+// ENTERPRISE EMAIL PRESENTATION HELPERS
+// ============================================================
+
+const AVATAR_PALETTE = [
+  "#1f4170", "#0a8a45", "#d83b01", "#7c3aed", "#0067b8",
+  "#b45309", "#0891b2", "#be185d", "#15803d", "#4338ca",
+];
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+export function avatarFor(name: string): { initials: string; color: string } {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? parts[0]?.[1] ?? "");
+  const color = AVATAR_PALETTE[hashString(name) % AVATAR_PALETTE.length];
+  return { initials: initials.toUpperCase().slice(0, 2), color };
+}
+
+export function snippetFromHtml(html: string): string {
+  const text = html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.slice(0, 90);
+}
+
+const INTERNAL_DOMAINS = ["nipun.com"];
+
+export function isExternalSender(senderEmail: string): boolean {
+  const domain = senderEmail.split("@")[1]?.toLowerCase() ?? "";
+  return !INTERNAL_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`));
+}
+
+function referenceFor(id: string): string {
+  return "MSG-" + (hashString(id) % 0xFFFFFF).toString(16).toUpperCase().padStart(6, "0");
+}
+
+function replyToFor(email: InboxClientEmail): string | null {
+  // Surface a reply-to hint when the sender is using a look-alike domain
+  const susp = email.links.some((l) => l.suspicious);
+  if (susp && isExternalSender(email.sender_email)) {
+    return email.sender_email;
+  }
+  return null;
+}
+
+function ccFor(email: InboxClientEmail): string | null {
+  // Deterministic but plausible CC for ~25% of emails
+  const h = hashString(email.id);
+  if (h % 4 !== 0) return null;
+  const pool = [
+    "ops-team@nipun.com",
+    "finance.team@nipun.com",
+    "leadership@nipun.com",
+    "hr.notifications@nipun.com",
+    "it-helpdesk@nipun.com",
+  ];
+  return pool[h % pool.length];
+}
+
+function IconBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="grid h-8 w-8 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+// ============================================================
+// CORPORATE FOOTER — appended to every email body
+// ============================================================
+function CorporateFooter({ email }: { email: InboxClientEmail }) {
+  const external = isExternalSender(email.sender_email);
+  const domain = email.sender_email.split("@")[1] ?? "example.com";
+  const company = external
+    ? domain.split(".")[0].replace(/^[a-z]/, (c) => c.toUpperCase())
+    : "Nipun Technologies Pvt. Ltd.";
+  const website = external ? `www.${domain}` : "www.nipun.com";
+  const address = external
+    ? "Registered Office on file with sender"
+    : "Nipun Tower, 4th Floor, Outer Ring Road, Bengaluru 560103, India";
+  // Only append our signature when the body doesn't already include one
+  const bodyLower = email.body_html.toLowerCase();
+  const hasSig = bodyLower.includes("confidential") || bodyLower.includes("disclaimer") ||
+                 bodyLower.includes("unsubscribe") || bodyLower.includes("&copy;") ||
+                 bodyLower.includes("©");
+  if (hasSig) return null;
+  return (
+    <div className="mt-6 border-t border-[#e5e7eb] pt-4 text-[11px] leading-relaxed text-[#6b7280]">
+      <div className="mb-2">
+        <div className="font-semibold text-[#374151]">{email.sender_name}</div>
+        <div>{company}</div>
+        <div>{address}</div>
+        <div className="mt-1">
+          <a className="text-[#1a73e8]" href={`https://${website}`}>{website}</a>
+          {" · "}
+          <a className="text-[#1a73e8]" href={`mailto:${email.sender_email}`}>{email.sender_email}</a>
+        </div>
+      </div>
+      <div className="italic">
+        CONFIDENTIALITY NOTICE: This email and any attachments are intended solely for the
+        addressee. If you received this in error, please notify the sender and delete the
+        message. Views expressed are those of the sender and may not represent {company}.
+      </div>
+      <div className="mt-2">© {new Date().getFullYear()} {company}. All rights reserved.</div>
+    </div>
+  );
+}
+
+// ============================================================
+// ATTACHMENT CARD — file-type aware (Outlook/Gmail style)
+// ============================================================
+interface FileMeta { icon: any; color: string; label: string }
+
+function fileMetaFor(name: string): FileMeta {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  switch (ext) {
+    case "pdf":
+      return { icon: FileText, color: "#d93025", label: "PDF" };
+    case "xls": case "xlsx": case "csv":
+      return { icon: FileSpreadsheet, color: "#0f7b3f", label: ext.toUpperCase() };
+    case "doc": case "docx":
+      return { icon: FileText, color: "#1a73e8", label: ext.toUpperCase() };
+    case "ppt": case "pptx":
+      return { icon: FileText, color: "#d24726", label: ext.toUpperCase() };
+    case "zip": case "rar": case "7z": case "gz":
+      return { icon: FileArchive, color: "#6b7280", label: ext.toUpperCase() };
+    case "png": case "jpg": case "jpeg": case "gif": case "webp": case "svg":
+      return { icon: FileImage, color: "#a855f7", label: ext.toUpperCase() };
+    case "html": case "htm": case "js": case "exe": case "bat":
+      return { icon: FileCode, color: "#dc2626", label: ext.toUpperCase() };
+    default:
+      return { icon: FileIcon, color: "#6b7280", label: ext.toUpperCase() || "FILE" };
+  }
+}
+
+function AttachmentCard({ name, size, onOpen }: { name: string; size: string; onOpen: () => void }) {
+  const meta = fileMetaFor(name);
+  const Icon = meta.icon;
+  return (
+    <div className="group flex w-[260px] items-stretch overflow-hidden rounded-md border border-border bg-white shadow-sm">
+      <div
+        className="grid w-12 shrink-0 place-items-center text-white"
+        style={{ background: meta.color }}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center px-3 py-2">
+        <div className="truncate text-[13px] font-medium text-foreground" title={name}>
+          {name}
+        </div>
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+          <span>·</span>
+          <span>{size}</span>
+        </div>
+      </div>
+      <button
+        onClick={onOpen}
+        className="grid w-10 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+        title="Download"
+      >
+        <Download className="h-4 w-4" />
+      </button>
     </div>
   );
 }
