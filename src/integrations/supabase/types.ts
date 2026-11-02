@@ -283,6 +283,36 @@ export type Database = {
           },
         ]
       }
+      password_mfa_results: {
+        Row: {
+          completed_activities: Json
+          created_at: string
+          id: string
+          quiz_answers: Json
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          completed_activities?: Json
+          created_at?: string
+          id?: string
+          quiz_answers?: Json
+          score?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          completed_activities?: Json
+          created_at?: string
+          id?: string
+          quiz_answers?: Json
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       phishing_scenarios: {
         Row: {
           attachments: Json
