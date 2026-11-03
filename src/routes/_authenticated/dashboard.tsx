@@ -39,10 +39,11 @@ const MODULES: Module[] = [
   },
   {
     slug: "password-security",
-    title: "Password Security",
-    description: "Build strong credential hygiene, password managers, and recovery workflows.",
-    duration: "≈ 20 min",
-    status: "coming_soon",
+    title: "Password Security & MFA Awareness",
+    description:
+      "Practise building strong password habits, spot risky ones, and learn how MFA stops attackers — five activities plus a scored assessment.",
+    duration: "≈ 40 min",
+    status: "available",
     icon: KeyRound,
   },
   {

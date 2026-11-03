@@ -9,48 +9,53 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RegisterTokenRouteImport } from './routes/register.$token'
-import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
+import { Route as RegisterTokenRouteImport } from './routes/register.$token'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as ApiScenarioSessionIdRouteImport } from './routes/api/scenario.$sessionId'
-import { Route as AuthenticatedTrainingPasswordSecurityRouteImport } from './routes/_authenticated/training.password-security'
-import { Route as AuthenticatedTrainingSlugRouteImport } from './routes/_authenticated/training.$slug'
-import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
-import { Route as AuthenticatedPlaySessionIdRouteImport } from './routes/_authenticated/play.$sessionId'
-import { Route as AuthenticatedAdminScenariosRouteImport } from './routes/_authenticated/admin.scenarios'
-import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
-import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
-import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin.employees'
-import { Route as AuthenticatedAdminCampaignsRouteImport } from './routes/_authenticated/admin.campaigns'
 import { Route as AuthenticatedAdminAdministratorsRouteImport } from './routes/_authenticated/admin.administrators'
-import { Route as AuthenticatedTrainingPasswordSecurityIndexRouteImport } from './routes/_authenticated/training.password-security.index'
+import { Route as AuthenticatedAdminCampaignsRouteImport } from './routes/_authenticated/admin.campaigns'
+import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authenticated/admin.employees'
+import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
+import { Route as AuthenticatedAdminScenariosRouteImport } from './routes/_authenticated/admin.scenarios'
+import { Route as AuthenticatedPlaySessionIdRouteImport } from './routes/_authenticated/play.$sessionId'
+import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
+import { Route as AuthenticatedTrainingSlugRouteImport } from './routes/_authenticated/training.$slug'
+import { Route as AuthenticatedTrainingPasswordSecurityRouteImport } from './routes/_authenticated/training.password-security'
+import { Route as ApiScenarioSessionIdRouteImport } from './routes/api/scenario.$sessionId'
 import { Route as AuthenticatedTrainingSlugIndexRouteImport } from './routes/_authenticated/training.$slug.index'
-import { Route as AuthenticatedTrainingPasswordSecurityWorkshopRouteImport } from './routes/_authenticated/training.password-security.workshop'
 import { Route as AuthenticatedTrainingSlugStartRouteImport } from './routes/_authenticated/training.$slug.start'
+import { Route as AuthenticatedTrainingPasswordSecurityIndexRouteImport } from './routes/_authenticated/training.password-security.index'
+import { Route as AuthenticatedTrainingPasswordSecurityWorkshopRouteImport } from './routes/_authenticated/training.password-security.workshop'
 
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterTokenRoute = RegisterTokenRouteImport.update({
-  id: '/register/$token',
-  path: '/register/$token',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaderboardRoute =
   AuthenticatedLeaderboardRouteImport.update({
@@ -58,72 +63,20 @@ const AuthenticatedLeaderboardRoute =
     path: '/leaderboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const RegisterTokenRoute = RegisterTokenRouteImport.update({
+  id: '/register/$token',
+  path: '/register/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const ApiScenarioSessionIdRoute = ApiScenarioSessionIdRouteImport.update({
-  id: '/api/scenario/$sessionId',
-  path: '/api/scenario/$sessionId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTrainingPasswordSecurityRoute =
-  AuthenticatedTrainingPasswordSecurityRouteImport.update({
-    id: '/training/password-security',
-    path: '/training/password-security',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTrainingSlugRoute =
-  AuthenticatedTrainingSlugRouteImport.update({
-    id: '/training/$slug',
-    path: '/training/$slug',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedResultsSessionIdRoute =
-  AuthenticatedResultsSessionIdRouteImport.update({
-    id: '/results/$sessionId',
-    path: '/results/$sessionId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlaySessionIdRoute =
-  AuthenticatedPlaySessionIdRouteImport.update({
-    id: '/play/$sessionId',
-    path: '/play/$sessionId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminScenariosRoute =
-  AuthenticatedAdminScenariosRouteImport.update({
-    id: '/scenarios',
-    path: '/scenarios',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminReportsRoute =
-  AuthenticatedAdminReportsRouteImport.update({
-    id: '/reports',
-    path: '/reports',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminRegistrationsRoute =
-  AuthenticatedAdminRegistrationsRouteImport.update({
-    id: '/registrations',
-    path: '/registrations',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminEmployeesRoute =
-  AuthenticatedAdminEmployeesRouteImport.update({
-    id: '/employees',
-    path: '/employees',
+const AuthenticatedAdminAdministratorsRoute =
+  AuthenticatedAdminAdministratorsRouteImport.update({
+    id: '/administrators',
+    path: '/administrators',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminCampaignsRoute =
@@ -132,11 +85,70 @@ const AuthenticatedAdminCampaignsRoute =
     path: '/campaigns',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdministratorsRoute =
-  AuthenticatedAdminAdministratorsRouteImport.update({
-    id: '/administrators',
-    path: '/administrators',
+const AuthenticatedAdminEmployeesRoute =
+  AuthenticatedAdminEmployeesRouteImport.update({
+    id: '/employees',
+    path: '/employees',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminRegistrationsRoute =
+  AuthenticatedAdminRegistrationsRouteImport.update({
+    id: '/registrations',
+    path: '/registrations',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminScenariosRoute =
+  AuthenticatedAdminScenariosRouteImport.update({
+    id: '/scenarios',
+    path: '/scenarios',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedPlaySessionIdRoute =
+  AuthenticatedPlaySessionIdRouteImport.update({
+    id: '/play/$sessionId',
+    path: '/play/$sessionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResultsSessionIdRoute =
+  AuthenticatedResultsSessionIdRouteImport.update({
+    id: '/results/$sessionId',
+    path: '/results/$sessionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTrainingSlugRoute =
+  AuthenticatedTrainingSlugRouteImport.update({
+    id: '/training/$slug',
+    path: '/training/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTrainingPasswordSecurityRoute =
+  AuthenticatedTrainingPasswordSecurityRouteImport.update({
+    id: '/training/password-security',
+    path: '/training/password-security',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiScenarioSessionIdRoute = ApiScenarioSessionIdRouteImport.update({
+  id: '/api/scenario/$sessionId',
+  path: '/api/scenario/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTrainingSlugIndexRoute =
+  AuthenticatedTrainingSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTrainingSlugRoute,
+  } as any)
+const AuthenticatedTrainingSlugStartRoute =
+  AuthenticatedTrainingSlugStartRouteImport.update({
+    id: '/start',
+    path: '/start',
+    getParentRoute: () => AuthenticatedTrainingSlugRoute,
   } as any)
 const AuthenticatedTrainingPasswordSecurityIndexRoute =
   AuthenticatedTrainingPasswordSecurityIndexRouteImport.update({
@@ -144,23 +156,11 @@ const AuthenticatedTrainingPasswordSecurityIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedTrainingPasswordSecurityRoute,
   } as any)
-const AuthenticatedTrainingSlugIndexRoute =
-  AuthenticatedTrainingSlugIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedTrainingSlugRoute,
-  } as any)
 const AuthenticatedTrainingPasswordSecurityWorkshopRoute =
   AuthenticatedTrainingPasswordSecurityWorkshopRouteImport.update({
     id: '/workshop',
     path: '/workshop',
     getParentRoute: () => AuthenticatedTrainingPasswordSecurityRoute,
-  } as any)
-const AuthenticatedTrainingSlugStartRoute =
-  AuthenticatedTrainingSlugStartRouteImport.update({
-    id: '/start',
-    path: '/start',
-    getParentRoute: () => AuthenticatedTrainingSlugRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -317,11 +317,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -331,25 +331,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register/$token': {
-      id: '/register/$token'
-      path: '/register/$token'
-      fullPath: '/register/$token'
-      preLoaderRoute: typeof RegisterTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/leaderboard': {
-      id: '/_authenticated/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -359,88 +352,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/leaderboard': {
+      id: '/_authenticated/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/register/$token': {
+      id: '/register/$token'
+      path: '/register/$token'
+      fullPath: '/register/$token'
+      preLoaderRoute: typeof RegisterTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/api/scenario/$sessionId': {
-      id: '/api/scenario/$sessionId'
-      path: '/api/scenario/$sessionId'
-      fullPath: '/api/scenario/$sessionId'
-      preLoaderRoute: typeof ApiScenarioSessionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/training/password-security': {
-      id: '/_authenticated/training/password-security'
-      path: '/training/password-security'
-      fullPath: '/training/password-security'
-      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/training/$slug': {
-      id: '/_authenticated/training/$slug'
-      path: '/training/$slug'
-      fullPath: '/training/$slug'
-      preLoaderRoute: typeof AuthenticatedTrainingSlugRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/results/$sessionId': {
-      id: '/_authenticated/results/$sessionId'
-      path: '/results/$sessionId'
-      fullPath: '/results/$sessionId'
-      preLoaderRoute: typeof AuthenticatedResultsSessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/play/$sessionId': {
-      id: '/_authenticated/play/$sessionId'
-      path: '/play/$sessionId'
-      fullPath: '/play/$sessionId'
-      preLoaderRoute: typeof AuthenticatedPlaySessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/scenarios': {
-      id: '/_authenticated/admin/scenarios'
-      path: '/scenarios'
-      fullPath: '/admin/scenarios'
-      preLoaderRoute: typeof AuthenticatedAdminScenariosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/reports': {
-      id: '/_authenticated/admin/reports'
-      path: '/reports'
-      fullPath: '/admin/reports'
-      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/registrations': {
-      id: '/_authenticated/admin/registrations'
-      path: '/registrations'
-      fullPath: '/admin/registrations'
-      preLoaderRoute: typeof AuthenticatedAdminRegistrationsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/employees': {
-      id: '/_authenticated/admin/employees'
-      path: '/employees'
-      fullPath: '/admin/employees'
-      preLoaderRoute: typeof AuthenticatedAdminEmployeesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/campaigns': {
-      id: '/_authenticated/admin/campaigns'
-      path: '/campaigns'
-      fullPath: '/admin/campaigns'
-      preLoaderRoute: typeof AuthenticatedAdminCampaignsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/administrators': {
@@ -450,12 +380,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdministratorsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/training/password-security/': {
-      id: '/_authenticated/training/password-security/'
-      path: '/'
-      fullPath: '/training/password-security/'
-      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityIndexRouteImport
-      parentRoute: typeof AuthenticatedTrainingPasswordSecurityRoute
+    '/_authenticated/admin/campaigns': {
+      id: '/_authenticated/admin/campaigns'
+      path: '/campaigns'
+      fullPath: '/admin/campaigns'
+      preLoaderRoute: typeof AuthenticatedAdminCampaignsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/employees': {
+      id: '/_authenticated/admin/employees'
+      path: '/employees'
+      fullPath: '/admin/employees'
+      preLoaderRoute: typeof AuthenticatedAdminEmployeesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/registrations': {
+      id: '/_authenticated/admin/registrations'
+      path: '/registrations'
+      fullPath: '/admin/registrations'
+      preLoaderRoute: typeof AuthenticatedAdminRegistrationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/scenarios': {
+      id: '/_authenticated/admin/scenarios'
+      path: '/scenarios'
+      fullPath: '/admin/scenarios'
+      preLoaderRoute: typeof AuthenticatedAdminScenariosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/play/$sessionId': {
+      id: '/_authenticated/play/$sessionId'
+      path: '/play/$sessionId'
+      fullPath: '/play/$sessionId'
+      preLoaderRoute: typeof AuthenticatedPlaySessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/results/$sessionId': {
+      id: '/_authenticated/results/$sessionId'
+      path: '/results/$sessionId'
+      fullPath: '/results/$sessionId'
+      preLoaderRoute: typeof AuthenticatedResultsSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/training/$slug': {
+      id: '/_authenticated/training/$slug'
+      path: '/training/$slug'
+      fullPath: '/training/$slug'
+      preLoaderRoute: typeof AuthenticatedTrainingSlugRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/training/password-security': {
+      id: '/_authenticated/training/password-security'
+      path: '/training/password-security'
+      fullPath: '/training/password-security'
+      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/scenario/$sessionId': {
+      id: '/api/scenario/$sessionId'
+      path: '/api/scenario/$sessionId'
+      fullPath: '/api/scenario/$sessionId'
+      preLoaderRoute: typeof ApiScenarioSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/training/$slug/': {
       id: '/_authenticated/training/$slug/'
@@ -464,19 +457,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTrainingSlugIndexRouteImport
       parentRoute: typeof AuthenticatedTrainingSlugRoute
     }
-    '/_authenticated/training/password-security/workshop': {
-      id: '/_authenticated/training/password-security/workshop'
-      path: '/workshop'
-      fullPath: '/training/password-security/workshop'
-      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityWorkshopRouteImport
-      parentRoute: typeof AuthenticatedTrainingPasswordSecurityRoute
-    }
     '/_authenticated/training/$slug/start': {
       id: '/_authenticated/training/$slug/start'
       path: '/start'
       fullPath: '/training/$slug/start'
       preLoaderRoute: typeof AuthenticatedTrainingSlugStartRouteImport
       parentRoute: typeof AuthenticatedTrainingSlugRoute
+    }
+    '/_authenticated/training/password-security/': {
+      id: '/_authenticated/training/password-security/'
+      path: '/'
+      fullPath: '/training/password-security/'
+      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityIndexRouteImport
+      parentRoute: typeof AuthenticatedTrainingPasswordSecurityRoute
+    }
+    '/_authenticated/training/password-security/workshop': {
+      id: '/_authenticated/training/password-security/workshop'
+      path: '/workshop'
+      fullPath: '/training/password-security/workshop'
+      preLoaderRoute: typeof AuthenticatedTrainingPasswordSecurityWorkshopRouteImport
+      parentRoute: typeof AuthenticatedTrainingPasswordSecurityRoute
     }
   }
 }
