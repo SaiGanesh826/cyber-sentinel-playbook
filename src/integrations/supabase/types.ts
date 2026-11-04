@@ -444,6 +444,163 @@ export type Database = {
         }
         Relationships: []
       }
+      pw_attempts: {
+        Row: {
+          answer_key: Json
+          attempt_number: number
+          campaign_id: string
+          content: Json
+          created_at: string
+          expires_at: string
+          id: string
+          max_score: number | null
+          percentage: number | null
+          performance_level: string | null
+          responses: Json
+          results: Json | null
+          score: number | null
+          set_hash: string
+          started_at: string
+          status: string
+          submitted_at: string | null
+          time_taken_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          answer_key: Json
+          attempt_number: number
+          campaign_id: string
+          content: Json
+          created_at?: string
+          expires_at: string
+          id?: string
+          max_score?: number | null
+          percentage?: number | null
+          performance_level?: string | null
+          responses?: Json
+          results?: Json | null
+          score?: number | null
+          set_hash: string
+          started_at?: string
+          status?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          answer_key?: Json
+          attempt_number?: number
+          campaign_id?: string
+          content?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          max_score?: number | null
+          percentage?: number | null
+          performance_level?: string | null
+          responses?: Json
+          results?: Json | null
+          score?: number | null
+          set_hash?: string
+          started_at?: string
+          status?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pw_attempts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "pw_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pw_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          departments: string[] | null
+          duration_seconds: number
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          module_slug: string
+          name: string
+          starts_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          departments?: string[] | null
+          duration_seconds?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          module_slug?: string
+          name: string
+          starts_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          departments?: string[] | null
+          duration_seconds?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          module_slug?: string
+          name?: string
+          starts_at?: string | null
+        }
+        Relationships: []
+      }
+      pw_retake_grants: {
+        Row: {
+          campaign_id: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          used_at: string | null
+          used_attempt_id: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          used_at?: string | null
+          used_attempt_id?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          used_at?: string | null
+          used_attempt_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pw_retake_grants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "pw_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registration_links: {
         Row: {
           campaign_id: string
@@ -605,6 +762,8 @@ export type Database = {
       }
       training_modules: {
         Row: {
+          access_end: string | null
+          access_start: string | null
           created_at: string
           description: string | null
           icon: string | null
@@ -617,6 +776,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_end?: string | null
+          access_start?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
@@ -629,6 +790,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_end?: string | null
+          access_start?: string | null
           created_at?: string
           description?: string | null
           icon?: string | null
