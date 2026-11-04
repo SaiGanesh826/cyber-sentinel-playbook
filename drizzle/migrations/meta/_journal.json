@@ -8,6 +8,13 @@
       "when": 1793620990689,
       "tag": "0000_create_password_mfa_results",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793789054078,
+      "tag": "0001_password_workshop",
+      "breakpoints": true
     }
   ]
 }
