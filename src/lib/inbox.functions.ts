@@ -173,11 +173,21 @@ export const startInboxSession = createServerFn({ method: "POST" })
 
     const { data: mod } = await supabaseAdmin
       .from("training_modules")
-      .select("id")
+      .select("id, is_enabled, is_available, access_start, access_end")
       .eq("slug", "phishing-awareness")
       .maybeSingle();
     if (!mod?.id)
       throw new Error("Training module not configured. Ask an administrator.");
+    {
+      const now = Date.now();
+      const m: any = mod;
+      if (
+        !m.is_enabled || !m.is_available ||
+        (m.access_start && new Date(m.access_start).getTime() > now) ||
+        (m.access_end && new Date(m.access_end).getTime() < now)
+      )
+        throw new Error("This workshop is currently unavailable. Please contact the administrator.");
+    }
 
     // Load active scenarios
     const { data: scenarios } = await supabaseAdmin
