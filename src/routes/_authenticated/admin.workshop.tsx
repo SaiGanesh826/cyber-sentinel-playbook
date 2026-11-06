@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   pwAdminData, pwAdminAttempt, pwSetModuleAccess, pwSaveCampaign, pwGrantRetake, pwRevokeRetake,
 } from "@/lib/pw.functions";
-import { MissionReview } from "./training.password-security.workshop";
+import { MissionReview } from "@/components/pw-mission-review";
 
 export const Route = createFileRoute("/_authenticated/admin/workshop")({
   head: () => ({ meta: [{ title: "Password Workshop Admin — Nipun" }, { name: "description", content: "Module access, campaigns, attempts and retakes." }] }),
