@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminEmployeesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminRegistrationsRouteImport } from './routes/_authenticated/admin.registrations'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
 import { Route as AuthenticatedAdminScenariosRouteImport } from './routes/_authenticated/admin.scenarios'
+import { Route as AuthenticatedAdminWorkshopRouteImport } from './routes/_authenticated/admin.workshop'
 import { Route as AuthenticatedPlaySessionIdRouteImport } from './routes/_authenticated/play.$sessionId'
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedTrainingSlugRouteImport } from './routes/_authenticated/training.$slug'
@@ -109,6 +110,12 @@ const AuthenticatedAdminScenariosRoute =
     path: '/scenarios',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminWorkshopRoute =
+  AuthenticatedAdminWorkshopRouteImport.update({
+    id: '/workshop',
+    path: '/workshop',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedPlaySessionIdRoute =
   AuthenticatedPlaySessionIdRouteImport.update({
     id: '/play/$sessionId',
@@ -176,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
+  '/admin/workshop': typeof AuthenticatedAdminWorkshopRoute
   '/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
@@ -199,6 +207,7 @@ export interface FileRoutesByTo {
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
+  '/admin/workshop': typeof AuthenticatedAdminWorkshopRoute
   '/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/api/scenario/$sessionId': typeof ApiScenarioSessionIdRoute
@@ -223,6 +232,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/scenarios': typeof AuthenticatedAdminScenariosRoute
+  '/_authenticated/admin/workshop': typeof AuthenticatedAdminWorkshopRoute
   '/_authenticated/play/$sessionId': typeof AuthenticatedPlaySessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/_authenticated/training/$slug': typeof AuthenticatedTrainingSlugRouteWithChildren
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin/registrations'
     | '/admin/reports'
     | '/admin/scenarios'
+    | '/admin/workshop'
     | '/play/$sessionId'
     | '/results/$sessionId'
     | '/training/$slug'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/registrations'
     | '/admin/reports'
     | '/admin/scenarios'
+    | '/admin/workshop'
     | '/play/$sessionId'
     | '/results/$sessionId'
     | '/api/scenario/$sessionId'
@@ -295,6 +307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/registrations'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/scenarios'
+    | '/_authenticated/admin/workshop'
     | '/_authenticated/play/$sessionId'
     | '/_authenticated/results/$sessionId'
     | '/_authenticated/training/$slug'
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminScenariosRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/workshop': {
+      id: '/_authenticated/admin/workshop'
+      path: '/workshop'
+      fullPath: '/admin/workshop'
+      preLoaderRoute: typeof AuthenticatedAdminWorkshopRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/play/$sessionId': {
       id: '/_authenticated/play/$sessionId'
       path: '/play/$sessionId'
@@ -488,6 +508,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminScenariosRoute: typeof AuthenticatedAdminScenariosRoute
+  AuthenticatedAdminWorkshopRoute: typeof AuthenticatedAdminWorkshopRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -498,6 +519,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminScenariosRoute: AuthenticatedAdminScenariosRoute,
+  AuthenticatedAdminWorkshopRoute: AuthenticatedAdminWorkshopRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

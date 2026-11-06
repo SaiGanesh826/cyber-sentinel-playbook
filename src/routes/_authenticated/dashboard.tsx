@@ -41,8 +41,8 @@ const MODULES: Module[] = [
     slug: "password-security",
     title: "Password Security & MFA Awareness",
     description:
-      "Practise building strong password habits, spot risky ones, and learn how MFA stops attackers — five activities plus a scored assessment.",
-    duration: "≈ 40 min",
+      "Four interactive missions: crack weak passwords, survive the MFA panic room, sort safe habits, and rescue a compromised account.",
+    duration: "30 min",
     status: "available",
     icon: KeyRound,
   },

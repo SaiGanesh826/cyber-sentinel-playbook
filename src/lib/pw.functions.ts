@@ -237,7 +237,8 @@ export const pwAdminAttempt = createServerFn({ method: "POST" })
     if (!a) throw new Error("Not found");
     const { scoreAttempt } = await import("@/lib/pw-engine.server");
     // In-progress attempts get a live preview evaluated against their own snapshot.
-    return { ...a, results: a.results ?? scoreAttempt(a.answer_key, a.responses) };
+    const results: any = a.results ?? scoreAttempt(a.answer_key, a.responses);
+    return { id: a.id as string, status: a.status as string, attempt_number: a.attempt_number as number, set_hash: a.set_hash as string, results };
   });
 
 export const pwSetModuleAccess = createServerFn({ method: "POST" })
