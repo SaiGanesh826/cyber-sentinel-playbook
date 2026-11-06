@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   BarChart3,
   ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -102,6 +103,9 @@ function AuthedShell() {
               </NavItem>
               <NavItem to="/admin/reports" active={path.startsWith("/admin/reports")} icon={BarChart3}>
                 Reports
+              </NavItem>
+              <NavItem to="/admin/workshop" active={path.startsWith("/admin/workshop")} icon={KeyRound}>
+                Password Workshop
               </NavItem>
             </>
           )}
